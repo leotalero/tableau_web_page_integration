@@ -1,0 +1,46 @@
+package co.sistemcobro.altitude.constante;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
+public enum ContactStatusEnum {
+	STARTED(0), EXECUTING(1), DONE(3), ABORTED_BY_AGENT(6), CREATED(10), LOCKED(11), CACHE(16);
+
+	public static final Map<Integer, ContactStatusEnum> mapByID = new HashMap<Integer, ContactStatusEnum>();
+	public static final Map<String, ContactStatusEnum> mapByNAME = new HashMap<String, ContactStatusEnum>();
+
+	static {
+		for (ContactStatusEnum s : EnumSet.allOf(ContactStatusEnum.class)) {
+			mapByID.put(s.getIndex(), s);
+			mapByNAME.put(s.name(), s);
+		}
+	}
+
+	private int index;
+
+	ContactStatusEnum(int index) {
+		this.index = index;
+	}
+
+	public int getIndex() {
+		return index;
+	}
+
+	public String getIndexString() {
+		return String.valueOf(index);
+	}
+
+	public String getNombre() {
+		return this.name();
+	}
+
+	public static ContactStatusEnum get(int id) {
+		return mapByID.get(id);
+	}
+
+	public static ContactStatusEnum get(String name) {
+		return mapByNAME.get(name);
+	}
+
+}

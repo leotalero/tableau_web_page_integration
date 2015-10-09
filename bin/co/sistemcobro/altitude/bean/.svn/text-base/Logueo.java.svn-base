@@ -1,0 +1,159 @@
+package co.sistemcobro.altitude.bean;
+
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class Logueo {
+
+	private Timestamp fechagestion;
+	private Timestamp conexioninicio;
+	private Timestamp conexionfin;
+	private Integer conexiontotal;
+	private Integer conexiondisponible;
+	private Integer conexionauxiliar;
+	private Integer tiempoacd;
+	private Integer tiempoacw;
+	private Integer tiempohold;
+	private BigDecimal tiempoacdavg;
+	private Integer llamadainefectiva;
+	private Integer llamadainnoefectiva;
+	private Integer llamadaoutefectiva;
+	private Integer llamadaoutnoefectiva;
+
+	private PhEUserBean user;
+	private PhCampaignBean campaign;
+
+	public BigDecimal getTiempoacdavg() {
+		return tiempoacdavg;
+	}
+
+	public void setTiempoacdavg(BigDecimal tiempoacdavg) {
+		this.tiempoacdavg = tiempoacdavg;
+	}
+
+	public Timestamp getFechagestion() {
+		return fechagestion;
+	}
+
+	public void setFechagestion(Timestamp fechagestion) {
+		this.fechagestion = fechagestion;
+	}
+
+	public Timestamp getConexioninicio() {
+		return conexioninicio;
+	}
+
+	public void setConexioninicio(Timestamp conexioninicio) {
+		this.conexioninicio = conexioninicio;
+	}
+
+	public Timestamp getConexionfin() {
+		return conexionfin;
+	}
+
+	public void setConexionfin(Timestamp conexionfin) {
+		this.conexionfin = conexionfin;
+	}
+
+	public Integer getConexiontotal() {
+		return conexiontotal;
+	}
+
+	public void setConexiontotal(Integer conexiontotal) {
+		this.conexiontotal = conexiontotal;
+	}
+
+	public Integer getConexiondisponible() {
+		return conexiondisponible;
+	}
+
+	public void setConexiondisponible(Integer conexiondisponible) {
+		this.conexiondisponible = conexiondisponible;
+	}
+
+	public Integer getConexionauxiliar() {
+		return conexionauxiliar;
+	}
+
+	public void setConexionauxiliar(Integer conexionauxiliar) {
+		this.conexionauxiliar = conexionauxiliar;
+	}
+
+	public Integer getTiempoacd() {
+		return tiempoacd;
+	}
+
+	public void setTiempoacd(Integer tiempoacd) {
+		this.tiempoacd = tiempoacd;
+	}
+
+	public Integer getTiempoacw() {
+		return tiempoacw;
+	}
+
+	public void setTiempoacw(Integer tiempoacw) {
+		this.tiempoacw = tiempoacw;
+	}
+
+	public Integer getTiempohold() {
+		return tiempohold;
+	}
+
+	public void setTiempohold(Integer tiempohold) {
+		this.tiempohold = tiempohold;
+	}
+
+	public Integer getLlamadainefectiva() {
+		return llamadainefectiva;
+	}
+
+	public void setLlamadainefectiva(Integer llamadainefectiva) {
+		this.llamadainefectiva = llamadainefectiva;
+	}
+
+	public Integer getLlamadainnoefectiva() {
+		return llamadainnoefectiva;
+	}
+
+	public void setLlamadainnoefectiva(Integer llamadainnoefectiva) {
+		this.llamadainnoefectiva = llamadainnoefectiva;
+	}
+
+	public Integer getLlamadaoutefectiva() {
+		return llamadaoutefectiva;
+	}
+
+	public void setLlamadaoutefectiva(Integer llamadaoutefectiva) {
+		this.llamadaoutefectiva = llamadaoutefectiva;
+	}
+
+	public Integer getLlamadaoutnoefectiva() {
+		return llamadaoutnoefectiva;
+	}
+
+	public void setLlamadaoutnoefectiva(Integer llamadaoutnoefectiva) {
+		this.llamadaoutnoefectiva = llamadaoutnoefectiva;
+	}
+
+	public PhEUserBean getUser() {
+		return user;
+	}
+
+	public void setUser(PhEUserBean user) {
+		this.user = user;
+	}
+
+	public PhCampaignBean getCampaign() {
+		return campaign;
+	}
+
+	public void setCampaign(PhCampaignBean campaign) {
+		this.campaign = campaign;
+	}
+
+}

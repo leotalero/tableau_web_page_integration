@@ -1,0 +1,93 @@
+package co.sistemcobro.altitude.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.altitude.bean.CtBean;
+import co.sistemcobro.altitude.bean.CtMovistarBean;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Fabio Alexander Orjuela Diaz
+ * 
+ */
+public class CtMovistarDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(CtMovistarDAO.class);
+
+	public CtMovistarDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<CtBean> buscarEasyCodesByCuenta(String campanaNombre, String cuentas) throws DatoException {
+
+		List<CtBean> cts = new ArrayList<CtBean>();
+		CtBean ct = null;
+
+		try {
+
+			String query = "select ct.easycode from altitude.dbo." + campanaNombre + " ct " + "where ct.ct_cuenta in ("
+					+ cuentas + ") ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(query.toString());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				ct = new CtBean();
+				ct.setEasycode(rs.getInt(1));
+				cts.add(ct);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return cts;
+
+	}
+
+	public Integer insertCtMovistar(String campanaNombre,List<CtMovistarBean> cts) throws DatoException {		
+		Integer estatus = 0;
+		int c = 1;
+		try {
+			
+			//logger.info("insertCt: campanaNombre:" + campanaNombre + ", cts:"+ cts.size());
+			
+			con = ds.getConnection();
+			String SQL_CT_MOVISTAR_INSERT = "insert into dbo."+ campanaNombre + " " + "(easycode,ct_cuenta) "
+					+ "values (?, ?)";
+
+			ps = con.prepareStatement(SQL_CT_MOVISTAR_INSERT.toString());
+			for (CtMovistarBean ct : cts) {
+				c = 1;
+				ps.setInt(c++, ct.getEasycode());
+				ps.setString(c++, ct.getCtcuenta());
+				estatus = estatus + ps.executeUpdate();
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+
+		} catch (Exception e) {
+			logger.error("Atrapó la excepcion en insertCtMovistar SQLEX: ", e);
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return estatus;
+
+	}
+
+}

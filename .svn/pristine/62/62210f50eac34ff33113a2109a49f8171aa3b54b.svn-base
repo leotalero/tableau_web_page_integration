@@ -1,0 +1,15 @@
+# FTP Archivos de Carga
+constelacion.ftp.server = ftp.sistemcobro.com
+constelacion.ftp.user = constelaciong
+constelacion.ftp.password = @c0nst3l4c10n369/
+
+app.file.temporal.global = temporal_files
+
+
+rrhh.ftp.serverR = ftp.sistemcobro.com
+rrhh.ftp.userR = recursog
+rrhh.ftp.passwordR =  @r3curs0369/
+
+rrhh.tableau.server=www.sistemcobro.com/tableau
+rrhh.tableau.userC=appsc
+rrhh.tableau.userG=appsg

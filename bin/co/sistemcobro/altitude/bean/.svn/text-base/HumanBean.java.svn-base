@@ -1,0 +1,65 @@
+package co.sistemcobro.altitude.bean;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class HumanBean {
+
+	private Integer agent;
+	private String fullname;
+	private String default_extension;
+	private Short type;
+	private String motd;
+	private Integer ivacc_user;
+
+	public Integer getAgent() {
+		return agent;
+	}
+
+	public void setAgent(Integer agent) {
+		this.agent = agent;
+	}
+
+	public String getFullname() {
+		return fullname;
+	}
+
+	public void setFullname(String fullname) {
+		this.fullname = fullname;
+	}
+
+	public String getDefault_extension() {
+		return default_extension;
+	}
+
+	public void setDefault_extension(String default_extension) {
+		this.default_extension = default_extension;
+	}
+
+	public Short getType() {
+		return type;
+	}
+
+	public void setType(Short type) {
+		this.type = type;
+	}
+
+	public String getMotd() {
+		return motd;
+	}
+
+	public void setMotd(String motd) {
+		this.motd = motd;
+	}
+
+	public Integer getIvacc_user() {
+		return ivacc_user;
+	}
+
+	public void setIvacc_user(Integer ivacc_user) {
+		this.ivacc_user = ivacc_user;
+	}
+
+}

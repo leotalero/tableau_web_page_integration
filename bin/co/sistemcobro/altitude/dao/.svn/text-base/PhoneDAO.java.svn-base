@@ -1,0 +1,64 @@
+package co.sistemcobro.altitude.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.altitude.bean.Phone;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class PhoneDAO extends BaseDAO {
+
+	public String QUERY_LISTADO_CAMPANAS;
+
+	public PhoneDAO() {
+	}
+
+	public PhoneDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<Phone> getPhones() throws DatoException {
+
+		List<Phone> phones = new ArrayList<Phone>();
+		Phone phone = null;
+
+		try {
+
+			String query = "select code, name from dbo.phone order by name ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(query.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				phone = new Phone();
+				phone.setCode(rs.getInt(c++));
+				phone.setName(rs.getString(c++));
+
+				phones.add(phone);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return phones;
+
+	}
+
+}

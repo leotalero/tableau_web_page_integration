@@ -1,0 +1,196 @@
+package co.sistemcobro.altitude.bean;
+
+import java.sql.Timestamp;
+import java.util.List;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+
+public class PhContactBean {
+
+	private Integer code;
+	private Integer campaign;
+	private Short status;
+	private Integer agent;
+	private Timestamp moment;
+	private Integer dial_rule;
+	private Short priority;
+	private Integer timezone;
+	private Short is_special;
+	private Integer ivacc_user;
+	private Short ntries_manual;
+	private Short ntries_auto;
+	private Short ntries_per_day;
+	private Timestamp current_day;
+
+	private PhEUserBean user;
+	private DialRuleBean dialrule;
+	private CtBean ct;
+	private List<ContactPhone> contactphones;
+
+	public Integer getCode() {
+		return code;
+	}
+
+	public void setCode(Integer code) {
+		this.code = code;
+	}
+
+	public Integer getCampaign() {
+		return campaign;
+	}
+
+	public void setCampaign(Integer campaign) {
+		this.campaign = campaign;
+	}
+
+	public Short getStatus() {
+		return status;
+	}
+
+	public void setStatus(Short status) {
+		this.status = status;
+	}
+
+	public Integer getAgent() {
+		return agent;
+	}
+
+	public void setAgent(Integer agent) {
+		this.agent = agent;
+	}
+
+	public Timestamp getMoment() {
+		return moment;
+	}
+
+	public void setMoment(Timestamp moment) {
+		this.moment = moment;
+	}
+
+	public Integer getDial_rule() {
+		return dial_rule;
+	}
+
+	public void setDial_rule(Integer dial_rule) {
+		this.dial_rule = dial_rule;
+	}
+
+	public Short getPriority() {
+		return priority;
+	}
+
+	public void setPriority(Short priority) {
+		this.priority = priority;
+	}
+
+	public Integer getTimezone() {
+		return timezone;
+	}
+
+	public void setTimezone(Integer timezone) {
+		this.timezone = timezone;
+	}
+
+	public Short getIs_special() {
+		return is_special;
+	}
+
+	public void setIs_special(Short is_special) {
+		this.is_special = is_special;
+	}
+
+	public Integer getIvacc_user() {
+		return ivacc_user;
+	}
+
+	public void setIvacc_user(Integer ivacc_user) {
+		this.ivacc_user = ivacc_user;
+	}
+
+	public Short getNtries_manual() {
+		return ntries_manual;
+	}
+
+	public void setNtries_manual(Short ntries_manual) {
+		this.ntries_manual = ntries_manual;
+	}
+
+	public Short getNtries_auto() {
+		return ntries_auto;
+	}
+
+	public void setNtries_auto(Short ntries_auto) {
+		this.ntries_auto = ntries_auto;
+	}
+
+	public Short getNtries_per_day() {
+		return ntries_per_day;
+	}
+
+	public void setNtries_per_day(Short ntries_per_day) {
+		this.ntries_per_day = ntries_per_day;
+	}
+
+	public Timestamp getCurrent_day() {
+		return current_day;
+	}
+
+	public void setCurrent_day(Timestamp current_day) {
+		this.current_day = current_day;
+	}
+
+	public PhEUserBean getUser() {
+		return user;
+	}
+
+	public void setUser(PhEUserBean user) {
+		this.user = user;
+	}
+
+	public DialRuleBean getDialrule() {
+		return dialrule;
+	}
+
+	public void setDialrule(DialRuleBean dialrule) {
+		this.dialrule = dialrule;
+	}
+
+	public CtBean getCt() {
+		return ct;
+	}
+
+	public void setCt(CtBean ct) {
+		this.ct = ct;
+	}
+
+	public List<ContactPhone> getContactphones() {
+		return contactphones;
+	}
+
+	public void setContactphones(List<ContactPhone> contactphones) {
+		this.contactphones = contactphones;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "PhContactBean [code=" + code + ", campaign=" + campaign
+				+ ", status=" + status + ", agent=" + agent + ", moment="
+				+ moment + ", dial_rule=" + dial_rule + ", priority="
+				+ priority + ", timezone=" + timezone + ", is_special="
+				+ is_special + ", ivacc_user=" + ivacc_user
+				+ ", ntries_manual=" + ntries_manual + ", ntries_auto="
+				+ ntries_auto + ", ntries_per_day=" + ntries_per_day
+				+ ", current_day=" + current_day + ", user=" + user
+				+ ", dialrule=" + dialrule + ", ct=" + ct + ", contactphones="
+				+ contactphones + "]";
+	}
+
+	
+}

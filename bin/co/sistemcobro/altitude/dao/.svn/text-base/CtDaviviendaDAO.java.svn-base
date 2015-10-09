@@ -1,0 +1,78 @@
+package co.sistemcobro.altitude.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.altitude.bean.CtBean;
+import co.sistemcobro.altitude.bean.CtDaviviendaBean;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author David Felipe Cardozo
+ * 
+ */
+
+public class CtDaviviendaDAO extends BaseDAO {
+
+	private Logger log = Logger.getLogger(CtDaviviendaDAO.class);
+
+	public CtDaviviendaDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<CtBean> buscarEasyCodesPorCedulas(String ctNombre, String cedulas) throws DatoException {
+		try {
+
+			String query = "select ct.easycode from altitude.dbo." + ctNombre + " ct " + "where ct.ctcedula in (" + cedulas + ") ";
+
+			con = ds.getConnection();
+			ps = con.prepareStatement(query.toString());
+
+			rs = ps.executeQuery();
+
+			List<CtBean> clientes = new ArrayList<CtBean>();
+			while (rs.next()) {
+				CtBean cliente = new CtBean();
+				cliente.setEasycode(rs.getInt(1));
+				clientes.add(cliente);
+			}
+			return clientes;
+		} catch (SQLException e) {
+			throw new DatoException(e);
+		} finally {
+			closeConexion();
+		}
+	}
+
+	public Integer insertCtDavivienda(String tablaNombre, List<CtDaviviendaBean> cts) throws DatoException {
+		try {
+			log.info("insertCt: campanaNombre:" + tablaNombre + ", cts:" + cts.size());
+			con = ds.getConnection();
+			String insert = "insert into dbo." + tablaNombre + " (easycode, ctCedula) values (?, ?)";
+
+			ps = con.prepareStatement(insert);
+			int estatus = 0;
+			for (CtDaviviendaBean ct : cts) {
+				estatus += ejecutarInsertContacto(ct);
+			}
+			return estatus;
+		} catch (SQLException e) {
+			throw new DatoException(e);
+		} finally {
+			closeConexion();
+		}
+	}
+
+	private int ejecutarInsertContacto(CtDaviviendaBean ct) throws SQLException {
+		ps.setInt(1, ct.getEasycode());
+		ps.setBigDecimal(2, ct.getCtcedula());
+		return ps.executeUpdate();
+	}
+}

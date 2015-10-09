@@ -1,0 +1,331 @@
+package co.sistemcobro.constelacion.dao;
+
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.constante.EstadoEnum;
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.all.util.Util;
+import co.sistemcobro.constelacion.bean.Gestion;
+import co.sistemcobro.constelacion.constante.GestionTipoBusquedaEnum;
+
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class KpiDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(KpiDAO.class);
+
+	public KpiDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<Gestion> getGestionReporte(Calendar desde, Calendar hasta) {
+		List<Gestion> gestiones = new ArrayList<Gestion>();
+		Gestion gestion = null;
+
+
+		try {
+			con = ds.getConnection();
+
+			StringBuffer q = new StringBuffer();
+			q.append("select p.patron,");			
+			q.append("p.tipo_campana,");
+			q.append("o.fechaasigna,");
+			q.append("o.nombrecliente,");
+			q.append("o.cuenta,");
+			q.append("o.tipoidentificacion,");
+			q.append("o.cedula,");
+			q.append("o.saldototal,");
+			q.append("o.diasmora,");
+			q.append("p.nombredecobrador,");
+			q.append("t.codresultado,");
+			q.append("t.codaccion,");
+			q.append("rnp.codigo, ");
+			q.append("g.idgestion,");
+			q.append("g.fechainicio, ");
+			q.append("substring(g.observacion,1,254),");
+			q.append("g.fechapromesa,");
+			q.append("g.valorpromesa,");
+			q.append("g.telefonomarcado,");					
+			q.append("g.usernamealtitude,");
+			q.append("isnull(CASE \r\n" + 
+					"WHEN len(ltrim(rtrim(g.telefonomarcado)))=7 THEN g.telefonomarcado\r\n" + 
+					"else ''   \r\n" + 
+					"END, '') ,");
+			q.append("isnull(CASE \r\n" + 
+					"WHEN len(ltrim(rtrim(g.telefonomarcado)))=10 and  substring (g.telefonomarcado,1,3) in (\r\n" + 
+					"select idoperador from constelacion.operador o\r\n" + 
+					"inner join constelacion.operador_tipo t on t.idoperadortipo = o.idoperadortipo  \r\n" + 
+					"where t.descripcion ='movistar' ) THEN g.telefonomarcado \r\n" + 
+					"else ''   \r\n" + 
+					"END, '') ,");
+			q.append("isnull(CASE \r\n" + 
+					"WHEN len(ltrim(rtrim(g.telefonomarcado)))=10 and  substring (g.telefonomarcado,1,3) not in (select idoperador from constelacion.operador o\r\n" + 
+					"inner join constelacion.operador_tipo t on t.idoperadortipo = o.idoperadortipo  \r\n" + 
+					"where t.descripcion ='movistar') THEN g.telefonomarcado\r\n" + 
+					"else ''   \r\n" + 
+					"END, '')");
+			q.append("from constelacion.gestion g ");
+			q.append("inner join constelacion.tipificacion t on g.idtipificacion=t.idtipificacion ");
+			q.append("inner join constelacion.obligacion_gestion og on og.idgestion=g.idgestion ");
+			q.append("inner join constelacion.obligacion o on o.idobligacion=og.idobligacion ");
+			q.append("left join constelacion.razon_nopago rnp on rnp.idrazonnopago=g.idrazonnopago ");
+			q.append("inner join constelacion.cargue c on c.idcargue = o.idcargue ");
+			q.append("inner join constelacion.base b on b.idbase = c.idbase ");
+			q.append("inner join constelacion.producto p on p.idproducto = b.idproducto ");
+			q.append("where g.estado = 2 and g.fechainicio >= convert(datetime,?,112) ");
+			q.append("and g.fechainicio < DATEADD(day, 1, convert(datetime,?,112)) ");
+			q.append("order by g.fechainicio ");
+			
+			ps = con.prepareStatement(q.toString());
+			ps.setString(1, Util.calendarToString(desde, "yyyyMMdd", Locale.getDefault()));
+			ps.setString(2, Util.calendarToString(hasta, "yyyyMMdd", Locale.getDefault()));
+						
+			logger.info("Query: "+q.toString());
+			
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				int c = 1;
+				
+				
+
+				/*obligacion.setFechaasigna(rs.getTimestamp(c++));
+				obligacion.setNombrecliente(rs.getString(c++));
+				obligacion.setCuenta(rs.getString(c++));
+				obligacion.setTipoidentificacion(rs.getString(c++));
+				obligacion.setCedula(rs.getString(c++));
+				obligacion.setSaldototal(rs.getDouble(c++));
+				obligacion.setDiasmora(rs.getInt(c++));
+				obligacion.setNombredecobrador(rs.getString(c++));*/
+
+
+				
+				gestion = new Gestion();
+				gestion.setIdgestion(rs.getInt(c++));
+				gestion.setFechainicio(rs.getTimestamp(c++));
+				gestion.setObservacion(rs.getString(c++));
+				gestion.setFechapromesa(rs.getTimestamp(c++));
+				gestion.setValorpromesa(rs.getDouble(c++));
+				gestion.setTelefonomarcado(rs.getString(c++));
+				gestion.setUsernamealtitude(rs.getString(c++));
+				gestion.setTelefonofijo(rs.getString(c++));
+				gestion.setTelefonomovistar(rs.getString(c++));
+				gestion.setTelefonootrooperador(rs.getString(c++));
+				
+				
+
+				gestiones.add(gestion);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return gestiones;
+	}
+	
+	
+	public List<Gestion> getGestionReporteFechaAuditoria(Calendar desde, Calendar hasta) {
+		List<Gestion> gestiones = new ArrayList<Gestion>();
+		Gestion gestion = null;
+
+
+		try {
+			con = ds.getConnection();
+
+			StringBuffer q = new StringBuffer();
+			q.append("select p.patron,");			
+			q.append("p.tipo_campana,");
+			q.append("o.fechaasigna,");
+			q.append("o.nombrecliente,");
+			q.append("o.cuenta,");
+			q.append("o.tipoidentificacion,");
+			q.append("o.cedula,");
+			q.append("o.saldototal,");
+			q.append("o.diasmora,");
+			q.append("p.nombredecobrador,");
+			q.append("t.codresultado,");
+			q.append("t.codaccion,");
+			q.append("rnp.codigo, ");
+			q.append("g.idgestion,");
+			q.append("g.fechainicio, ");
+			q.append("substring(g.observacion,1,254),");
+			q.append("g.fechapromesa,");
+			q.append("g.valorpromesa,");
+			q.append("g.telefonomarcado,");					
+			q.append("g.usernamealtitude,");
+			q.append("isnull(CASE \r\n" + 
+					"WHEN len(ltrim(rtrim(g.telefonomarcado)))=7 THEN g.telefonomarcado\r\n" + 
+					"else ''   \r\n" + 
+					"END, '') ,");
+			q.append("isnull(CASE \r\n" + 
+					"WHEN len(ltrim(rtrim(g.telefonomarcado)))=10 and  substring (g.telefonomarcado,1,3) in (\r\n" + 
+					"select idoperador from constelacion.operador o\r\n" + 
+					"inner join constelacion.operador_tipo t on t.idoperadortipo = o.idoperadortipo  \r\n" + 
+					"where t.descripcion ='movistar' ) THEN g.telefonomarcado \r\n" + 
+					"else ''   \r\n" + 
+					"END, '') ,");
+			q.append("isnull(CASE \r\n" + 
+					"WHEN len(ltrim(rtrim(g.telefonomarcado)))=10 and  substring (g.telefonomarcado,1,3) not in (select idoperador from constelacion.operador o\r\n" + 
+					"inner join constelacion.operador_tipo t on t.idoperadortipo = o.idoperadortipo  \r\n" + 
+					"where t.descripcion ='movistar') THEN g.telefonomarcado\r\n" + 
+					"else ''   \r\n" + 
+					"END, '')");
+			q.append("from constelacion.gestion g ");
+			q.append("inner join constelacion.tipificacion t on g.idtipificacion=t.idtipificacion ");
+			q.append("inner join constelacion.obligacion_gestion og on og.idgestion=g.idgestion ");
+			q.append("inner join constelacion.obligacion o on o.idobligacion=og.idobligacion ");
+			q.append("left join constelacion.razon_nopago rnp on rnp.idrazonnopago=g.idrazonnopago ");
+			q.append("inner join constelacion.cargue c on c.idcargue = o.idcargue ");
+			q.append("inner join constelacion.base b on b.idbase = c.idbase ");
+			q.append("inner join constelacion.producto p on p.idproducto = b.idproducto ");
+			q.append("where g.estado = 2 and g.fechacrea >= convert(datetime,?,112) ");
+			q.append("and g.fechacrea < DATEADD(day, 1, convert(datetime,?,112)) ");
+			q.append("order by g.fechainicio ");
+			
+			ps = con.prepareStatement(q.toString());
+			ps.setString(1, Util.calendarToString(desde, "yyyyMMdd", Locale.getDefault()));
+			ps.setString(2, Util.calendarToString(hasta, "yyyyMMdd", Locale.getDefault()));
+						
+			logger.info("Query: "+q.toString());
+			
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				int c = 1;
+				
+				
+				gestion = new Gestion();
+				gestion.setIdgestion(rs.getInt(c++));
+				gestion.setFechainicio(rs.getTimestamp(c++));
+				gestion.setObservacion(rs.getString(c++));
+				gestion.setFechapromesa(rs.getTimestamp(c++));
+				gestion.setValorpromesa(rs.getDouble(c++));
+				gestion.setTelefonomarcado(rs.getString(c++));
+				gestion.setUsernamealtitude(rs.getString(c++));
+				gestion.setTelefonofijo(rs.getString(c++));
+				gestion.setTelefonomovistar(rs.getString(c++));
+				gestion.setTelefonootrooperador(rs.getString(c++));
+				
+
+				gestiones.add(gestion);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return gestiones;
+	}
+	
+	
+	public List<Gestion> buscarGestiones(String desde, String hasta,
+			Integer idusuariocrea, String valor,
+			GestionTipoBusquedaEnum tipobusqueda) {
+
+		List<Gestion> gestiones = new ArrayList<Gestion>();
+		Gestion gestion = null;
+
+		try {
+
+			StringBuffer q = new StringBuffer();
+			q.append("select g.idgestion, g.idtipificacion, g.fechainicio, g.fechafin, ");
+			q.append("g.fechainiciollamada, g.fechafinllamada, g.telefonomarcado, g.valorpromesa, g.montoreal,  ");
+			q.append("g.fechaagendamiento, g.telefonoagendamiento, g.idusuarioaltitude, g.usernamealtitude, ");
+			q.append("g.idsucursal, g.idcampanaaltitude, g.campanaaltitude, g.easycodealtitude, ");
+			q.append("g.fullnamealtitude, g.observacion, g.idusuariocrea, g.fechacrea, g.estado, (select count(c.idcuota) ");
+			q.append("from constelacion.cuota c where c.idgestion=g.idgestion) as numcuotas, (select max(c.fechavencimiento) ");
+			q.append("from constelacion.cuota c where c.idgestion=g.idgestion) as ultimacuota, ");
+			q.append("o.idobligacion, o.cuenta, o.cedula, o.nombrecliente, ");
+			q.append("t.idtipificacion, t.concatenado ");
+			q.append("from constelacion.gestion g ");
+			q.append("inner join constelacion.tipificacion t on g.idtipificacion=t.idtipificacion ");
+			q.append("inner join constelacion.obligacion_gestion og on og.idgestion=g.idgestion ");
+			q.append("inner join constelacion.obligacion o on o.idobligacion=og.idobligacion ");
+			q.append("where g.estado = ? ");
+
+			if (GestionTipoBusquedaEnum.FECHA_CREACION.getIndex() == tipobusqueda
+					.getIndex()) {
+				q.append("and g.fechainicio >= convert(datetime,'" + desde
+						+ "',112) ");
+				q.append("and g.fechainicio < convert(datetime,'"
+						+ Util.addDays("yyyyMMdd", hasta, 1) + "',112) ");
+			} else if (GestionTipoBusquedaEnum.CEDULA.getIndex() == tipobusqueda
+					.getIndex()) {
+				q.append("and o.cedula = '" + valor + "' ");
+			} else if (GestionTipoBusquedaEnum.CUSTCODE.getIndex() == tipobusqueda
+					.getIndex()) {
+				q.append("and o.cuenta = '" + valor + "' ");
+			} else if (GestionTipoBusquedaEnum.NOMBRECLIENTE.getIndex() == tipobusqueda
+					.getIndex()) {
+				q.append("and o.nombrecliente like  '" + valor + "' ");
+			} else {
+				q.append("and o.cuenta is null ");
+			}
+
+			if (null != idusuariocrea && idusuariocrea > 0) {
+				q.append("and g.idusuariocrea = " + idusuariocrea + " ");
+			}
+			q.append("order by g.fechainicio  ");
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(q.toString());
+			ps.setInt(1, EstadoEnum.ACTIVO.getIndex());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				gestion = new Gestion();
+				gestion.setIdgestion(rs.getInt(c++));
+				gestion.setIdtipificacion(rs.getInt(c++));
+				gestion.setFechainicio(rs.getTimestamp(c++));
+				gestion.setFechafin(rs.getTimestamp(c++));
+				gestion.setFechainiciollamada(rs.getTimestamp(c++));
+				gestion.setFechafinllamada(rs.getTimestamp(c++));
+				gestion.setTelefonomarcado(rs.getString(c++));
+				gestion.setValorpromesa(rs.getDouble(c++));
+				gestion.setMontoreal(rs.getDouble(c++));
+				gestion.setFechaagendamiento(rs.getTimestamp(c++));
+				gestion.setTelefonoagendamiento(rs.getString(c++));
+				gestion.setIdusuarioaltitude(rs.getInt(c++));
+				gestion.setUsernamealtitude(rs.getString(c++));
+				gestion.setIdsucursal(rs.getInt(c++));
+				gestion.setIdcampanaaltitude(rs.getInt(c++));
+				gestion.setCampanaaltitude(rs.getString(c++));
+				gestion.setEasycodealtitude(rs.getInt(c++));
+				gestion.setFullnamealtitude(rs.getString(c++));
+				gestion.setObservacion(rs.getString(c++));
+				gestion.setIdusuariocrea(rs.getInt(c++));
+				gestion.setFechacrea(rs.getTimestamp(c++));
+				gestion.setEstado(rs.getShort(c++));
+				gestion.setNumcuotas(rs.getInt(c++));
+				gestion.setFechaultimacuota(rs.getTimestamp(c++));
+
+
+				gestiones.add(gestion);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return gestiones;
+
+	}
+}

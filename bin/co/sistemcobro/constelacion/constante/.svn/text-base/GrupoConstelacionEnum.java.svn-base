@@ -1,0 +1,42 @@
+package co.sistemcobro.constelacion.constante;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
+public enum GrupoConstelacionEnum{
+	ADMINISTRADOR(1), ADMINISTRADOR_CONSTELACION(194), ANALISTA_CONSTELACION(195),ASESOR_CONSTELACION(196), COORDINADOR_CONSTELACION(197),DIRECTOR_CONSTELACION(198), GERENTE_CONSTELACION(199), VICEPRESIDENTE_CONSTELACION(200), PRESIDENTE_CONSTELACION(201);
+
+	public static final Map<Integer, GrupoConstelacionEnum> mapByID = new HashMap<Integer, GrupoConstelacionEnum>();
+	public static final Map<String, GrupoConstelacionEnum> mapByNAME = new HashMap<String, GrupoConstelacionEnum>();
+
+	static {
+		for (GrupoConstelacionEnum s : EnumSet.allOf(GrupoConstelacionEnum.class)) {
+			mapByID.put(s.getIndex(), s);
+			mapByNAME.put(s.name(), s);
+		}
+	}
+
+	private int index;
+
+	GrupoConstelacionEnum(int index) {
+		this.index = index;
+	}
+
+	public int getIndex() {
+		return index;
+	}
+
+	public String getIndexString() {
+		return String.valueOf(index);
+	}
+
+	public static GrupoConstelacionEnum get(int id) {
+		return mapByID.get(id);
+	}
+
+	public static GrupoConstelacionEnum get(String name) {
+		return mapByNAME.get(name);
+	}
+
+}

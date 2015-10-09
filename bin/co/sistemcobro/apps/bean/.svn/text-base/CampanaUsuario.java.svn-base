@@ -1,0 +1,90 @@
+package co.sistemcobro.apps.bean;
+
+import java.sql.Timestamp;
+import java.util.List;
+
+import co.sistemcobro.altitude.bean.PhCampaignBean;
+import co.sistemcobro.hermes.bean.UsuarioBean;
+
+public class CampanaUsuario {
+
+	private Integer idcampana;
+	private Integer idusuario;
+	private Integer idusuariocrea;
+	private Timestamp fechacrea;
+
+	private PhCampaignBean campana;
+
+	private UsuarioBean usuario;
+
+	private List<PhCampaignBean> campanas;
+	private List<UsuarioBean> usuarios;
+
+	public CampanaUsuario() {
+	}
+
+	public Integer getIdcampana() {
+		return idcampana;
+	}
+
+	public void setIdcampana(Integer idcampana) {
+		this.idcampana = idcampana;
+	}
+
+	public Integer getIdusuario() {
+		return idusuario;
+	}
+
+	public void setIdusuario(Integer idusuario) {
+		this.idusuario = idusuario;
+	}
+
+	public Integer getIdusuariocrea() {
+		return idusuariocrea;
+	}
+
+	public void setIdusuariocrea(Integer idusuariocrea) {
+		this.idusuariocrea = idusuariocrea;
+	}
+
+	public Timestamp getFechacrea() {
+		return fechacrea;
+	}
+
+	public void setFechacrea(Timestamp fechacrea) {
+		this.fechacrea = fechacrea;
+	}
+
+	public PhCampaignBean getCampana() {
+		return campana;
+	}
+
+	public void setCampana(PhCampaignBean campana) {
+		this.campana = campana;
+	}
+
+	public UsuarioBean getUsuario() {
+		return usuario;
+	}
+
+	public void setUsuario(UsuarioBean usuario) {
+		this.usuario = usuario;
+	}
+
+	public List<PhCampaignBean> getCampanas() {
+		return campanas;
+	}
+
+	public void setCampanas(List<PhCampaignBean> campanas) {
+		this.campanas = campanas;
+	}
+
+	public List<UsuarioBean> getUsuarios() {
+		return usuarios;
+	}
+
+	public void setUsuarios(List<UsuarioBean> usuarios) {
+		this.usuarios = usuarios;
+	}
+
+}

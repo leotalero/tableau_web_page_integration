@@ -1,0 +1,205 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package co.sistemcobro.constelacion.bean;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Timestamp;
+
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlRootElement;
+
+
+/**
+ * 
+ * @author jhurtado
+ */
+@Entity
+@Table(name = "obligacion")
+@XmlRootElement
+@NamedQueries({ @NamedQuery(name = "Obligacion.findAll", query = "SELECT o FROM Obligacion o") })
+public class Hecho implements Serializable {
+	private static final long serialVersionUID = 1L;
+	@Id
+	@Basic(optional = false)
+	@Column(name = "idhecho")
+	private Long idhecho;
+	@Column(name = "idcargue")
+	private Integer idcargue;
+	
+	private BigInteger iddimensionindicador;
+	private BigInteger numeroidentificacion;
+	private BigDecimal  valorindicador;
+	private BigDecimal valormeta;
+	private Integer iddimensionarea;
+	private Integer iddimensiontiempotipo;
+	private Timestamp fecha;
+
+	@Column(name = "idusuariocrea")
+	private Integer idusuariocrea;
+	@Column(name = "fechacrea")
+	private Timestamp fechacrea;
+	@Column(name = "estado")
+	private short estado;
+	@Column(name = "fechaactualizacion")
+	private Timestamp fechaactualizacion;
+	@JoinColumn(name = "idcargue", referencedColumnName = "idcargue")
+	@ManyToOne(optional = false)
+	private Cargue cargue;
+
+
+	public Hecho() {
+	}
+	
+	public Long getIdhecho() {
+		return idhecho;
+	}
+
+	public void setIdhecho(Long idhecho) {
+		this.idhecho = idhecho;
+	}
+	
+	public Integer getIdcargue() {
+		return idcargue;
+	}
+
+	public void setIdcargue(Integer idcargue) {
+		this.idcargue = idcargue;
+	}
+	
+	public BigInteger getIddimensionindicador() {
+		return iddimensionindicador;
+	}
+
+	public void setIddimensionindicador(BigInteger iddimensionindicador) {
+		this.iddimensionindicador = iddimensionindicador;
+	}
+
+	public BigInteger getNumeroidentificacion() {
+		return numeroidentificacion;
+	}
+
+	public void setNumeroidentificacion(BigInteger numeroidentificacion) {
+		this.numeroidentificacion = numeroidentificacion;
+	}
+
+	public Integer getIddimensionarea() {
+		return iddimensionarea;
+	}
+
+	public void setIddimensionarea(Integer iddimensionarea) {
+		this.iddimensionarea = iddimensionarea;
+	}
+
+	public Integer getIddimensiontiempotipo() {
+		return iddimensiontiempotipo;
+	}
+
+	public void setIddimensiontiempotipo(Integer iddimensiontiempotipo) {
+		this.iddimensiontiempotipo = iddimensiontiempotipo;
+	}
+
+	public Integer getIdusuariocrea() {
+		return idusuariocrea;
+	}
+
+	public void setIdusuariocrea(Integer idusuariocrea) {
+		this.idusuariocrea = idusuariocrea;
+	}
+
+	public Timestamp getFechacrea() {
+		return fechacrea;
+	}
+
+	public void setFechacrea(Timestamp fechacrea) {
+		this.fechacrea = fechacrea;
+	}
+
+	public short getEstado() {
+		return estado;
+	}
+
+	public void setEstado(short estado) {
+		this.estado = estado;
+	}
+
+	public Timestamp getFechaactualizacion() {
+		return fechaactualizacion;
+	}
+
+	public void setFechaactualizacion(Timestamp fechaactualizacion) {
+		this.fechaactualizacion = fechaactualizacion;
+	}
+
+	public Cargue getCargue() {
+		return cargue;
+	}
+
+	public void setCargue(Cargue cargue) {
+		this.cargue = cargue;
+	}
+
+	public Timestamp getFecha() {
+		return fecha;
+	}
+
+	public void setFecha(Timestamp fecha) {
+		this.fecha = fecha;
+	}
+	
+	public BigDecimal getValorindicador() {
+		return valorindicador;
+	}
+
+	public void setValorindicador(BigDecimal valorindicador) {
+		this.valorindicador = valorindicador;
+	}
+
+	public BigDecimal getValormeta() {
+		return valormeta;
+	}
+
+	public void setValormeta(BigDecimal valormeta) {
+		this.valormeta = valormeta;
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = 0;
+		hash += (idhecho != null ? idhecho.hashCode() : 0);
+		return hash;
+	}
+
+	@Override
+	public boolean equals(Object object) {
+		// TODO: Warning - this method won't work in the case the id fields are
+		// not set
+		if (!(object instanceof Hecho)) {
+			return false;
+		}
+		Hecho other = (Hecho) object;
+		if ((this.idhecho == null && other.idhecho != null)
+				|| (this.idhecho != null && !this.idhecho
+						.equals(other.idhecho))) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "constelacion.Obligacion[ idobligacion=" + idhecho + " ]";
+	}
+
+}

@@ -1,0 +1,478 @@
+package co.sistemcobro.constelacion.ejb;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ResourceBundle;
+
+import javax.ejb.Stateless;
+
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.log4j.Logger;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import co.sistemcobro.all.constante.EstadoEnum;
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.all.exception.ExcelException;
+import co.sistemcobro.all.exception.LogicaException;
+import co.sistemcobro.all.util.Excel;
+import co.sistemcobro.all.util.Ftp;
+import co.sistemcobro.all.util.Util;
+import co.sistemcobro.constelacion.bean.Base;
+import co.sistemcobro.constelacion.bean.Calculado;
+import co.sistemcobro.constelacion.bean.Cargue;
+import co.sistemcobro.constelacion.bean.CargueTipo;
+import co.sistemcobro.constelacion.bean.DimensionArea;
+import co.sistemcobro.constelacion.bean.DimensionIndicador;
+import co.sistemcobro.constelacion.bean.DimensionTiempo;
+import co.sistemcobro.constelacion.bean.DimensionTiempoTipo;
+import co.sistemcobro.constelacion.bean.DimensionUsuario;
+import co.sistemcobro.constelacion.bean.Gestion;
+import co.sistemcobro.constelacion.bean.Hecho;
+import co.sistemcobro.constelacion.bean.HechoOperacion;
+import co.sistemcobro.constelacion.constante.BaseTipoBusquedaEnum;
+import co.sistemcobro.constelacion.constante.CargueTipoEnum;
+import co.sistemcobro.constelacion.constante.ConstanteConstelacion;
+import co.sistemcobro.constelacion.constante.EstadoCargueEnum;
+import co.sistemcobro.constelacion.constante.GestionTipoBusquedaEnum;
+import co.sistemcobro.constelacion.dao.BaseConstelacionDAO;
+import co.sistemcobro.constelacion.dao.CalculadoDAO;
+import co.sistemcobro.constelacion.dao.CalculadoDAO.FrecuenciaEnum;
+import co.sistemcobro.constelacion.dao.CargueDAO;
+import co.sistemcobro.constelacion.dao.CargueTipoDAO;
+import co.sistemcobro.constelacion.dao.DimensionAreaDAO;
+import co.sistemcobro.constelacion.dao.DimensionIndicadorDAO;
+import co.sistemcobro.constelacion.dao.DimensionTiempoDAO;
+import co.sistemcobro.constelacion.dao.DimensionTiempoTipoDAO;
+import co.sistemcobro.constelacion.dao.DimensionUsuarioDAO;
+import co.sistemcobro.constelacion.dao.KpiDAO;
+import co.sistemcobro.constelacion.dao.HechoDAO;
+import co.sistemcobro.constelacion.dao.HechoOperacionDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+
+@Stateless
+public class GestionEJB extends BaseEJB {
+	private Logger logger = Logger.getLogger(GestionEJB.class);
+	ResourceBundle config = ResourceBundle.getBundle(ConstanteConstelacion.FILE_CONFIG_CONSTELACION);
+
+	public GestionEJB() {
+
+	}
+
+	
+	public Integer eliminarBase(Base base) {
+		BaseConstelacionDAO BaseconstelacionDAO = new BaseConstelacionDAO(dg_constelacion);
+		base.setEstado((short) EstadoEnum.ELIMINADO.getIndex());
+		return BaseconstelacionDAO.actualizarEstadoBase(base);
+	}
+
+	public Integer activarBase(Base base) {
+		BaseConstelacionDAO BaseconstelacionDAO = new BaseConstelacionDAO(dg_constelacion);
+		base.setEstado((short) EstadoEnum.ACTIVO.getIndex());
+		return BaseconstelacionDAO.actualizarEstadoBase(base);
+	}
+
+	public Integer deshabilitarBase(Base base) {
+		BaseConstelacionDAO BaseconstelacionDAO = new BaseConstelacionDAO(dg_constelacion);
+		base.setEstado((short) EstadoEnum.DESHABILITADO.getIndex());
+		return BaseconstelacionDAO.actualizarEstadoBase(base);
+	}
+
+	
+
+	public List<Gestion> getGestionReporte(Calendar desde, Calendar hasta) {
+		KpiDAO gestionDAO = new KpiDAO(dc_constelacion);
+		return gestionDAO.getGestionReporte(desde, hasta);
+	}
+	
+	public List<Gestion> getGestionReporteFechaAuditoria(Calendar desde, Calendar hasta) {
+		KpiDAO gestionDAO = new KpiDAO(dc_constelacion);
+		return gestionDAO.getGestionReporteFechaAuditoria(desde, hasta);
+	}
+
+	
+	public List<Base> getBases() {
+		BaseConstelacionDAO baseDAO = new BaseConstelacionDAO(dc_constelacion);
+		return baseDAO.getBases();
+	}
+
+	
+	public List<Gestion> buscarGestiones(String desde, String hasta, Integer idusuariocrea, String valor, GestionTipoBusquedaEnum tipobusqueda) {
+		KpiDAO gestionDAO = new KpiDAO(dc_constelacion);
+		return gestionDAO.buscarGestiones(desde, hasta, idusuariocrea, valor, tipobusqueda);
+	}
+
+	
+
+	@SuppressWarnings("static-access")
+	public List<Hecho> cargarHechos(File file, Integer idbase,Integer idarea,Integer idtiempotipo,String fecha, Integer idusuariocrea) throws ExcelException, IOException, LogicaException {
+		List<Hecho> hechos = new ArrayList<Hecho>();
+		Integer resultado = 0;
+		try {
+
+			String serverFTP = config.getString("constelacion.ftp.server");
+			FTPClient ftp = null;
+			ftp = (new Ftp()).getFTPConnect(serverFTP, config.getString("constelacion.ftp.user"), config.getString("constelacion.ftp.password"));
+
+			if (ftp.isConnected()) {
+				FileInputStream in = new FileInputStream(file);
+				ftp.setFileType(ftp.BINARY_FILE_TYPE);
+				boolean res = ftp.storeFile(file.getName(), in);
+				logger.info("Resultado de subir el archivo [" + file.getName() + "] a FTP [" + res + "]");
+				if (!res) {
+					throw new LogicaException("Error: No fue posible grabar el archivo [" + file.getName() + "] en el FTP [" + serverFTP + "]. Verifique si tiene permisos de escritura.");
+				}
+				
+				hechos = verificarHechos(file, idusuariocrea,idarea,idtiempotipo,fecha);
+				
+				logger.info("Base verificada: [OK]");
+				CargueDAO cargueDAOc = new CargueDAO(dc_constelacion);
+				List<Cargue> cargues = cargueDAOc.getCarguesPorBaseYTipo(idbase, CargueTipoEnum.HECHOS.getIndex(), EstadoCargueEnum.ACTIVO.getIndex());
+		
+				for (Cargue cargue : cargues) {
+					cargue.setEstado((short) EstadoCargueEnum.DESACTIVADO.getIndex());
+					
+				}
+				
+				CargueDAO cargueDAOg = new CargueDAO(dg_constelacion);
+				cargueDAOg.deshabilitarCargues(cargues);
+				Cargue cargue = new Cargue();
+				cargue.setIdbase(idbase);
+				cargue.setIdcarguetipo(CargueTipoEnum.HECHOS.getIndex());
+				cargue.setNombre(file.getName());
+				cargue.setRegistroscargados(hechos.size());
+				cargue.setIdusuariocrea(idusuariocrea);
+				cargue.setEstado((short) EstadoCargueEnum.ACTIVO.getIndex());
+
+				resultado = cargueDAOg.insertarCargues(cargue);
+				if (resultado >= 1) {
+					logger.info("Cargue creado [" + cargue.getIdcargue() + "]:  [OK]");
+
+					for (Hecho hecho_tmp : hechos) {
+						hecho_tmp.setIdcargue(cargue.getIdcargue());
+					}
+
+					HechoDAO hechoDAOg = new HechoDAO(dg_constelacion);
+					hechoDAOg.eliminarHechos();
+					resultado = hechoDAOg.insertarHechos(hechos);
+
+					if (hechos.size() == resultado) {
+						logger.info("[Paso 1/5] Se crearón correctamente " + resultado + " obligaciones");
+
+					} else {
+						throw new LogicaException("Error: [Paso 1/5] Se crearon solo " + resultado + " de " + hechos.size() + " obligaciones");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 1/5] Error al crear el idcargue");
+				}
+
+			} else {
+				throw new LogicaException("Error: No fue posible conectarse al FTP [" + serverFTP + "]");
+			}
+
+		} catch (Exception e) {
+			throw new LogicaException(e.toString());
+		}
+		return hechos;
+	}
+	
+	
+	public void cargarHechosOperacion(Integer idtiempotipo,Integer idcargue,String fechacargue) throws LogicaException {
+		
+		try {
+
+				if(verificarDimensionIndicador(idcargue) != ""){					
+					throw new LogicaException("Error: Los [idindicadores]: " + verificarDimensionIndicador(idcargue) + " no se encuentran en la dimensión indicador");
+				}
+				if(verificarDimensionUsuario(idcargue) != ""){					
+					throw new LogicaException("Error: Los [numeroidentificacion]: " + verificarDimensionUsuario(idcargue) + " no se encuentran en la dimensión Usuario");
+				}
+				
+				String idarea= verificarDimensionAreaPorCargue(idcargue);
+				Integer idarea_tmp = 0;
+				
+				if(idarea != ""){					
+					idarea_tmp = Integer.parseInt(idarea);
+				}else{
+					throw new LogicaException("Error: La [iddimensionarea]: " + idarea_tmp + " no se encuentran ");
+				}
+				
+				String dimensionTiempo = verificarDimensionTiempo(idtiempotipo,idcargue);
+				
+				logger.info("Dimension de Tiempo "+dimensionTiempo);
+				
+				if(dimensionTiempo != ""){					
+					throw new LogicaException("Error: La [fecha]: " + dimensionTiempo + " no se encuentran en la dimensión Tiempo con [Tipotiempo] "+ idtiempotipo);
+				}
+				
+				DimensionTiempoDAO dimensionTiempoDAO = new DimensionTiempoDAO(dg_constelacion);
+				List<DimensionTiempo> dimensiontiempo = new ArrayList<DimensionTiempo>();
+				dimensiontiempo = dimensionTiempoDAO.getDimensionTiempoPorFechaTipo(idtiempotipo, fechacargue);
+				
+				
+				
+				Integer iddimenciontiempo=0;
+				
+				for (DimensionTiempo tiempo_tmp : dimensiontiempo) {
+					iddimenciontiempo = tiempo_tmp.getIddimensiontiempo().intValue();					
+				}
+				
+				logger.info("area : "+idarea_tmp);
+				
+				HechoOperacionDAO hechooperacionDAOg = new HechoOperacionDAO(dg_constelacion);
+				hechooperacionDAOg.eliminarHechosOperacion(idarea_tmp, iddimenciontiempo);
+				hechooperacionDAOg.insertarHechosOperacion(idcargue);
+				
+				
+				
+		} catch (Exception e) {
+			throw new LogicaException(e.toString());
+		}
+		
+	}
+	
+	
+	private List<Hecho> verificarHechos(File file, Integer idusuariocrea, Integer idarea, Integer tiempotipo, String fecha) throws FileNotFoundException, IOException, ExcelException {
+		List<Hecho> hechos = new ArrayList<Hecho>();
+		try {
+			/* POI */
+			FileInputStream excel = new FileInputStream(file);
+			XSSFWorkbook workbook = new XSSFWorkbook(excel);
+			XSSFSheet sheet = workbook.getSheetAt(0);
+			List<XSSFCell> data = new ArrayList<XSSFCell>();
+			@SuppressWarnings("rawtypes")
+			Iterator rows = sheet.rowIterator();
+			Integer fila = 0;
+			Integer columna = 0;
+			Hecho hecho = null;
+			// Extrayendo data
+			while (rows.hasNext()) {
+				fila++;
+				XSSFRow row = (XSSFRow) rows.next();
+				if (row.getRowNum() > 0) {
+					data = new ArrayList<XSSFCell>();
+					for (int i = 0; i < 5; i++) {
+						// XSSFCell cell = row.getCell(i,
+						// row.RETURN_NULL_AND_BLANK);
+						XSSFCell cell = row.getCell(i, row.CREATE_NULL_AS_BLANK);
+						data.add(cell);
+					}
+					
+					int tamano = data.size();
+					if (tamano > 1) {
+						columna = 0;
+						hecho = new Hecho();
+
+						hecho.setIddimensionindicador(Excel.getBigInteger(data.get(columna++), true));
+						hecho.setNumeroidentificacion(Excel.getBigInteger(data.get(columna++), true));
+						hecho.setValorindicador(Excel.getBigDecimal(data.get(columna++), true));
+						hecho.setValormeta(Excel.getBigDecimal(data.get(columna++), true));
+						hecho.setIddimensionarea(idarea);
+						hecho.setIddimensiontiempotipo(tiempotipo);
+						hecho.setFecha(Util.stringToTimestamp(fecha,"yyyyMMdd"));
+						
+						hecho.setEstado((short) EstadoEnum.ACTIVO.getIndex());
+						hecho.setIdusuariocrea(idusuariocrea);
+						hechos.add(hecho);
+
+					}
+				}
+			}} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return hechos;
+	}
+	
+	private String verificarDimensionIndicador(Integer idcargue) throws IOException, ExcelException {
+		DimensionIndicadorDAO dimensionIndicadorDAO = new DimensionIndicadorDAO(dc_constelacion);
+		
+		List<DimensionIndicador> indicadores = dimensionIndicadorDAO.getVerificarIndicador(idcargue);
+		String indicadoresNA = "";
+		
+		if(indicadores.size() > 0){
+			
+			for (DimensionIndicador indicador_tmp : indicadores) {
+				indicadoresNA = indicadoresNA+indicador_tmp.getIddimensionindicador()+",";
+			}
+			indicadoresNA = indicadoresNA.substring(0, indicadoresNA.length() - 1);
+		}
+		
+		return indicadoresNA;	
+	}
+	
+	private String verificarDimensionArea() throws IOException, ExcelException {
+		DimensionAreaDAO dimensionAreaDAO = new DimensionAreaDAO(dc_constelacion);
+		
+		List<DimensionArea> areas = dimensionAreaDAO.getVerificarArea();
+		String areasNA = "";
+		
+		if(areas.size() > 0){
+			
+			for (DimensionArea area_tmp : areas) {
+				areasNA = areasNA+area_tmp.getIddimensionarea()+",";
+			}
+			areasNA = areasNA.substring(0, areasNA.length() - 1);
+		}
+		
+		return areasNA;	
+	}
+	
+	private String verificarDimensionAreaPorCargue(Integer idcargue) throws IOException, ExcelException {
+		DimensionAreaDAO dimensionAreaDAO = new DimensionAreaDAO(dc_constelacion);
+		
+		List<DimensionArea> areas = dimensionAreaDAO.getVerificarAreaPorCargue(idcargue);
+		String areasNA = "";
+		
+		if(areas.size() > 0){
+			
+			for (DimensionArea area_tmp : areas) {
+				areasNA = areasNA+area_tmp.getIddimensionarea()+",";
+			}
+			areasNA = areasNA.substring(0, areasNA.length() - 1);
+		}
+		
+		return areasNA;	
+	}
+	
+	private String verificarDimensionTiempo(Integer idtiempotipo,Integer idcargue) throws IOException, ExcelException {
+		DimensionTiempoDAO dimensionTiempoDAO = new DimensionTiempoDAO(dc_constelacion);
+		
+		List<DimensionTiempo> tiempos = dimensionTiempoDAO.getVerificarTiempo(idtiempotipo,idcargue);
+		String tiemposNA = "";
+		
+		if(tiempos.size() > 0){
+			
+			for (DimensionTiempo tiempo_tmp : tiempos) {
+				tiemposNA = tiemposNA+tiempo_tmp.getFecha()+",";
+			}
+			tiemposNA = tiemposNA.substring(0, tiemposNA.length() - 1);
+		}
+		
+		return tiemposNA;	
+	}
+	
+	private String verificarDimensionUsuario(Integer idcargue) throws IOException, ExcelException {
+		DimensionUsuarioDAO dimensionUsuarioDAO = new DimensionUsuarioDAO(dc_constelacion);
+		
+		List<DimensionUsuario> usuarios = dimensionUsuarioDAO.getVerificarUsuario(idcargue);
+		String UsuariosNA = "";
+		
+		if(usuarios.size() > 0){
+			
+			for (DimensionUsuario usuario_tmp : usuarios) {
+				UsuariosNA = UsuariosNA+usuario_tmp.getIddimensionusuario()+",";
+			}
+			UsuariosNA = UsuariosNA.substring(0, UsuariosNA.length() - 1);
+		}
+		
+		return UsuariosNA;	
+	}
+	
+	public List<CargueTipo> getCarguesTipos() {
+		CargueTipoDAO carguetipoDAO = new CargueTipoDAO(dc_constelacion);
+		return carguetipoDAO.getCarguesTipos();
+	}
+	
+	
+
+	public List<Base> buscarBases(String desde, String hasta, BaseTipoBusquedaEnum tipobusqueda, String[] estados) {
+		String estados_final = "";
+		if (null != estados && estados.length > 0) {
+			for (String e : estados) {
+				estados_final += e + ",";
+			}
+			estados_final = estados_final.substring(0, estados_final.length() - 1);
+		}
+		BaseConstelacionDAO baseDAO = new BaseConstelacionDAO(dc_constelacion);
+		return baseDAO.buscarBases(desde, hasta, tipobusqueda, estados_final);
+	}
+
+	public Base getBasePorId(Integer idbase) throws LogicaException {
+		Base base = null;
+		try {
+			BaseConstelacionDAO BaseconstelacionDAO = new BaseConstelacionDAO(dc_constelacion);
+			base = BaseconstelacionDAO.getBasePorId(idbase);
+
+		} catch (DatoException e) {
+			throw new LogicaException(e.toString());
+		}
+		return base;
+	}
+
+	public Integer insertarBase(Base base) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			BaseConstelacionDAO BaseconstelacionDAO = new BaseConstelacionDAO(dg_constelacion);
+			resultado = BaseconstelacionDAO.insertarBase(base);
+
+		} catch (Exception e) {
+			throw new LogicaException(e.toString());
+		}
+		return resultado;
+	}
+
+	public List<Calculado> getKpiPorUsuario(Calendar desde, Calendar hasta, FrecuenciaEnum frecuencia,Integer idarea,Integer idtiempotipo, Integer idindicador) {
+		CalculadoDAO calculadoDAO = new CalculadoDAO(dc_constelacion);
+		return calculadoDAO.getKpiPorUsuario(desde, hasta, frecuencia,idarea,idtiempotipo,idindicador);
+	}
+	
+	/**
+     * Metodo que cambia de estado del cargue seleccionado (activa-desactiva-elimina)
+     * @param cargue
+     * @return
+     * @throws LogicaException
+     */
+    public Integer deshabilitarCargue(List<Cargue> cargues) throws LogicaException {
+        Integer resultado = 0;
+        try {
+            CargueDAO cargueDAO = new CargueDAO(dg_constelacion);
+            resultado = cargueDAO.deshabilitarCargues(cargues);
+
+        } catch (Exception e) {
+            logger.error("Atrapó la excepcion", e);
+            throw new LogicaException(e.toString());
+        }
+        return resultado;
+    }
+    
+    public List<DimensionArea> getDimensionArea() {
+    	DimensionAreaDAO dimensionAreaDAO = new DimensionAreaDAO(dc_constelacion);
+		return dimensionAreaDAO.getAreas();
+	}
+    
+    public List<DimensionTiempoTipo> getDimensionTiempoTipo() {
+    	DimensionTiempoTipoDAO dimensionTiempoTipoDAO = new DimensionTiempoTipoDAO(dc_constelacion);
+		return dimensionTiempoTipoDAO.getDimensionTiempoTipo();
+	}
+    
+    public List<DimensionIndicador> getDimensionIndicador() {
+    	DimensionIndicadorDAO dimensionIndicadorDAO = new DimensionIndicadorDAO(dc_constelacion);
+		return dimensionIndicadorDAO.getDimensionIndicador();
+	}
+    
+    public List<Calculado> getHechosPorIdusuario(Calendar desde, Calendar hasta, FrecuenciaEnum frecuencia,Integer idusuarior) {
+		CalculadoDAO calculadoDAO = new CalculadoDAO(dc_constelacion);
+		return calculadoDAO.getKpiPorIdUsuario(desde, hasta, frecuencia,idusuarior);
+	}
+    
+    public DimensionUsuario getUsuarioPorId(Integer idusuario) {
+    	DimensionUsuarioDAO dimensionUsuarioDAO = new DimensionUsuarioDAO(dc_constelacion);
+		return dimensionUsuarioDAO.getUsuarioPorId(idusuario);
+	}
+
+}

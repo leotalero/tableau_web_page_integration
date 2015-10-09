@@ -1,0 +1,103 @@
+package co.sistemcobro.constelacion.dao;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.constante.EstadoEnum;
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.all.util.Excel;
+import co.sistemcobro.all.util.Util;
+import co.sistemcobro.constelacion.bean.DimensionIndicador;
+import co.sistemcobro.constelacion.bean.Hecho;
+import co.sistemcobro.constelacion.bean.HechoOperacion;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class HechoOperacionDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(HechoOperacionDAO.class);
+
+	public HechoOperacionDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	private static String SQL_INSERTAR_HECHO_OPERACION = "INSERT INTO constelacion.hecho_operacion\r\n" + 
+			"           (iddimensionarea\r\n" + 
+			"           ,iddimensionindicador\r\n" + 
+			"           ,iddimensiontiempo\r\n" + 
+			"           ,iddimensionusuario\r\n" + 
+			"           ,valorindicador\r\n" + 
+			"           ,valormeta\r\n" + 
+			"           ,idusuariocrea\r\n" + 
+			"           ,fechacrea\r\n" + 
+			"           ,estado)\r\n" + 
+			"     SELECT ci.iddimensionarea\r\n" + 
+			"      ,ci.iddimensionindicador\r\n" + 
+			"      ,dt.iddimensiontiempo\r\n" + 
+			"      ,du.iddimensionusuario\r\n" + 
+			"      ,ci.valorindicador\r\n" + 
+			"      ,ci.valormeta\r\n" + 
+			"      ,ci.idusuariocrea\r\n" + 
+			"      ,ci.fechacrea\r\n" + 
+			"      ,ci.estado\r\n" + 
+			"  FROM constelacion.cargue_indicador ci \r\n" + 
+			"  INNER JOIN constelacion.dimension_tiempo dt on convert(nvarchar(8),ci.fecha,112) = convert(nvarchar(8),dt.fecha,112) \r\n" + 
+			"  INNER JOIN constelacion.dimension_tiempo_tipo dtp on dt.iddimensiontiempotipo = dtp.iddimensiontiempotipo \r\n" + 
+			"  INNER JOIN constelacion.dimension_usuario du on ci.numeroidentificacion = du.numeroidentificacion \r\n" + 
+			"  where ci.idcargue = ? \r\n" + 
+			"  and dtp.iddimensiontiempotipo = ci.iddimensiontiempotipo";
+	
+	public void insertarHechosOperacion(Integer idcargue) {
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_INSERTAR_HECHO_OPERACION.toString());
+			ps.setInt(1, idcargue);
+			ps.executeUpdate();
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+	}
+
+	
+	public void eliminarHechosOperacion(Integer idarea,Integer idtiempo) {
+
+		try {
+			
+			StringBuilder query = new StringBuilder()
+			.append("delete FROM constelacion.hecho_operacion ")
+			.append("where  iddimensionarea = ? and iddimensiontiempo = ? ");
+			
+			con = ds.getConnection();
+			ps = con.prepareStatement(query.toString());
+			
+			ps.setInt(1, idarea);
+			ps.setInt(2, idtiempo);
+			ps.executeUpdate();
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+	}
+	
+	
+	
+	
+}

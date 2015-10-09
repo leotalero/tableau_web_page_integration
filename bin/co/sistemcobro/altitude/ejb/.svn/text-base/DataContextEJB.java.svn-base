@@ -1,0 +1,46 @@
+package co.sistemcobro.altitude.ejb;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
+import javax.ejb.Stateless;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.all.exception.LogicaException;
+import co.sistemcobro.altitude.bean.DataContext;
+import co.sistemcobro.altitude.dao.DataContextDAO;
+
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+@Stateless
+public class DataContextEJB extends BaseEJB {
+	private Logger logger = Logger.getLogger(DataContextEJB.class);
+
+	public DataContextEJB() {
+	}
+
+	public List<DataContext> buscarLlamadas(Calendar desde, Calendar hasta,
+			String idcampanas, String idterminationsstatus, String telefono,
+			String agente, String easycode) throws LogicaException {
+
+		DataContextDAO dataContextDAO = new DataContextDAO(dc_altitude);
+		List<DataContext> llamadas = new ArrayList<DataContext>();
+
+		try {			
+			logger.info("desde="+desde.getTime()+", hasta="+hasta.getTime()+", idcamapanas="+idcampanas+", idterminationsstatus="+idterminationsstatus+", telefono="+telefono+", agente="+agente+", easycode="+easycode);
+			llamadas = dataContextDAO.buscarLlamadas(desde, hasta, idcampanas,
+					idterminationsstatus, telefono, agente, easycode);
+
+		} catch (DatoException e) {
+			throw new LogicaException(e.toString());
+		}
+		return llamadas;
+	}
+}

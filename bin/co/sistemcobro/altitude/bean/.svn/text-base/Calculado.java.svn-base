@@ -1,0 +1,72 @@
+package co.sistemcobro.altitude.bean;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+import co.sistemcobro.apps.bean.Origin;
+import co.sistemcobro.apps.bean.TerminationStatus;
+import co.sistemcobro.hermes.bean.UsuarioBean;
+
+public class Calculado {
+
+	private UsuarioBean usuario;
+
+	private TerminationStatus terminationstatus;
+
+	private Origin origin;
+
+	private PhCampaignBean campaign;
+
+	private List<BigDecimal> valores;
+
+	public PhCampaignBean getCampaign() {
+		return campaign;
+	}
+
+	public void setCampaign(PhCampaignBean campaign) {
+		this.campaign = campaign;
+	}
+
+	public UsuarioBean getUsuario() {
+		return usuario;
+	}
+
+	public TerminationStatus getTerminationstatus() {
+		return terminationstatus;
+	}
+
+	public void setTerminationstatus(TerminationStatus terminationstatus) {
+		this.terminationstatus = terminationstatus;
+	}
+
+	public Origin getOrigin() {
+		return origin;
+	}
+
+	public void setOrigin(Origin origin) {
+		this.origin = origin;
+	}
+
+	public void setUsuario(UsuarioBean usuario) {
+		this.usuario = usuario;
+	}
+
+	public List<BigDecimal> getValores() {
+		return valores;
+	}
+
+	public void setValores(List<BigDecimal> valores) {
+		this.valores = valores;
+	}
+
+	public BigDecimal getTotalvalores() {
+		BigDecimal total = new BigDecimal(0);
+		for (BigDecimal val : valores) {
+			if (null != val) {
+				total = total.add(val);
+			}
+		}
+		return total;
+	}
+
+}

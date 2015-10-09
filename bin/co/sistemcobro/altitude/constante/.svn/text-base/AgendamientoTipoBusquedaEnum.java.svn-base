@@ -1,0 +1,43 @@
+package co.sistemcobro.altitude.constante;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
+public enum AgendamientoTipoBusquedaEnum {
+	DESDE_HASTA(1), DESDE(2);
+
+	public static final Map<Integer, AgendamientoTipoBusquedaEnum> mapByID = new HashMap<Integer, AgendamientoTipoBusquedaEnum>();
+	public static final Map<String, AgendamientoTipoBusquedaEnum> mapByNAME = new HashMap<String, AgendamientoTipoBusquedaEnum>();
+
+	static {
+		for (AgendamientoTipoBusquedaEnum s : EnumSet
+				.allOf(AgendamientoTipoBusquedaEnum.class)) {
+			mapByID.put(s.getIndex(), s);
+			mapByNAME.put(s.name(), s);
+		}
+	}
+
+	private int index;
+
+	AgendamientoTipoBusquedaEnum(int index) {
+		this.index = index;
+	}
+
+	public int getIndex() {
+		return index;
+	}
+
+	public String getIndexString() {
+		return String.valueOf(index);
+	}
+
+	public static AgendamientoTipoBusquedaEnum get(int id) {
+		return mapByID.get(id);
+	}
+
+	public static AgendamientoTipoBusquedaEnum get(String name) {
+		return mapByNAME.get(name);
+	}
+
+}

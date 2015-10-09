@@ -1,0 +1,138 @@
+package co.sistemcobro.altitude.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.altitude.bean.ContactPhone;
+import co.sistemcobro.altitude.bean.CtBean;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class ContactPhoneDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(ContactPhoneDAO.class);
+
+	public ContactPhoneDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<CtBean> buscarEasyCodesSinPhone(String campanaNombre, Integer phone) throws DatoException {
+
+		List<CtBean> cts = new ArrayList<CtBean>();
+		CtBean ct = null;
+
+		try {
+
+			StringBuffer q = new StringBuffer();
+
+			q.append("select ct.easycode ");
+			q.append("from dbo." + campanaNombre + " ct ");
+			q.append("left join dbo.contact_phone p on (ct.easycode=p.contact and p.phone=?) ");
+			q.append("where p.ph_number is null ");
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(q.toString());
+			ps.setInt(1, phone);
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				ct = new CtBean();
+				ct.setEasycode(rs.getInt(1));
+				cts.add(ct);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e);
+		} catch (Exception e) {
+			
+			throw new DatoException(e.toString(), e);
+		} finally {
+			closeConexion();
+		}
+		return cts;
+
+	}
+
+	public Integer actualizarContactPhone(List<ContactPhone> telefonos) throws DatoException {
+		Integer cantidad = 0;
+		int c = 1;
+		try {
+
+			String query = "update dbo.contact_phone set ph_number=? where contact =? and phone=? ";
+
+			con = ds.getConnection();
+			ps = con.prepareStatement(query.toString());
+
+			for (ContactPhone telefono : telefonos) {
+				c = 1;
+				ps.setString(c++, telefono.getPh_number());
+				ps.setInt(c++, telefono.getContact());
+				ps.setInt(c++, telefono.getPhone());
+				cantidad = cantidad + ps.executeUpdate();
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e);
+		} catch (Exception e) {
+			logger.error("Excepción atrapada en actualizarContactPhone: ", e);
+			throw new DatoException(e.toString(), e);
+		} finally {
+			closeConexion();
+		}
+		return cantidad;
+	}
+
+	private static String SQL_CT_CONTACT_PHONE_INSERT = "insert into dbo.contact_phone(contact,phone,active,p_status,ph_number, " + "ntries_busy,ntries_noanswer,ntries_machine,ntries_fax,ntries_modem,ntries_rejected, " + "ntries_invalid,ntries_lineovrflw,ntries_per_day) values "
+			+ "(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+
+	public Integer insertContactPhone(List<ContactPhone> telefonos) throws DatoException {
+		Integer estatus = 0;
+		int c = 1;
+		try {
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_CT_CONTACT_PHONE_INSERT.toString());
+			for (ContactPhone telefono : telefonos) {
+				//logger.info(telefono.toString());
+				c = 1;
+				ps.setInt(c++, telefono.getContact());
+				ps.setInt(c++, telefono.getPhone());
+				ps.setShort(c++, telefono.getActive());
+				ps.setShort(c++, telefono.getP_status());
+				ps.setString(c++, telefono.getPh_number());
+				ps.setShort(c++, telefono.getNtries_busy());
+				ps.setShort(c++, telefono.getNtries_noanswer());
+				ps.setShort(c++, telefono.getNtries_machine());
+				ps.setShort(c++, telefono.getNtries_fax());
+				ps.setShort(c++, telefono.getNtries_modem());
+				ps.setShort(c++, telefono.getNtries_rejected());
+				ps.setShort(c++, telefono.getNtries_invalid());
+				ps.setShort(c++, telefono.getNtries_lineovrflw());
+				ps.setShort(c++, telefono.getNtries_per_day());
+				estatus = estatus + ps.executeUpdate();
+			}
+
+		} catch (SQLException e) {
+			
+			throw new DatoException(e.toString(), e);
+		} catch (Exception e) {
+			logger.error("Excepción atrapada en insertContactPhone: ", e);
+			throw new DatoException(e.toString(), e);
+		} finally {
+			closeConexion();
+		}
+		return estatus;
+
+	}
+
+}

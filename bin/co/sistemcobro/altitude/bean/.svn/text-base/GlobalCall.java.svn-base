@@ -1,0 +1,77 @@
+package co.sistemcobro.altitude.bean;
+
+import java.util.List;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class GlobalCall {
+
+	private Integer code;
+	private String call_key;
+	private String ph_number;
+	private String dnis;
+	private Integer contact;
+	private Integer phone;
+
+	private List<CallThread> callthreads;
+
+	public Integer getCode() {
+		return code;
+	}
+
+	public void setCode(Integer code) {
+		this.code = code;
+	}
+
+	public String getCall_key() {
+		return call_key;
+	}
+
+	public void setCall_key(String call_key) {
+		this.call_key = call_key;
+	}
+
+	public String getPh_number() {
+		return ph_number;
+	}
+
+	public void setPh_number(String ph_number) {
+		this.ph_number = ph_number;
+	}
+
+	public String getDnis() {
+		return dnis;
+	}
+
+	public void setDnis(String dnis) {
+		this.dnis = dnis;
+	}
+
+	public Integer getContact() {
+		return contact;
+	}
+
+	public void setContact(Integer contact) {
+		this.contact = contact;
+	}
+
+	public Integer getPhone() {
+		return phone;
+	}
+
+	public void setPhone(Integer phone) {
+		this.phone = phone;
+	}
+
+	public List<CallThread> getCallthreads() {
+		return callthreads;
+	}
+
+	public void setCallthreads(List<CallThread> callthreads) {
+		this.callthreads = callthreads;
+	}
+
+}

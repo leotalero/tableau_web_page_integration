@@ -1,0 +1,123 @@
+package co.sistemcobro.altitude.bean;
+
+import java.sql.Timestamp;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class DataTransaction {
+
+	private Integer code;
+	private Integer iddatacontext;
+	private Timestamp start_time;
+	private Integer duration;
+	private Integer call_type;
+	private Integer ideuser;
+	private Integer team;
+	private String recording_key;
+	private Integer recorder_type;
+	private Integer site;
+
+	private DataContext datacontext;
+
+	private PhEUserBean pheuser;
+
+	public Integer getCode() {
+		return code;
+	}
+
+	public void setCode(Integer code) {
+		this.code = code;
+	}
+
+	public Timestamp getStart_time() {
+		return start_time;
+	}
+
+	public void setStart_time(Timestamp start_time) {
+		this.start_time = start_time;
+	}
+
+	public Integer getDuration() {
+		return duration;
+	}
+
+	public void setDuration(Integer duration) {
+		this.duration = duration;
+	}
+
+	public Integer getCall_type() {
+		return call_type;
+	}
+
+	public void setCall_type(Integer call_type) {
+		this.call_type = call_type;
+	}
+
+	public Integer getTeam() {
+		return team;
+	}
+
+	public void setTeam(Integer team) {
+		this.team = team;
+	}
+
+	public String getRecording_key() {
+		return recording_key;
+	}
+
+	public void setRecording_key(String recording_key) {
+		this.recording_key = recording_key;
+	}
+
+	public Integer getRecorder_type() {
+		return recorder_type;
+	}
+
+	public void setRecorder_type(Integer recorder_type) {
+		this.recorder_type = recorder_type;
+	}
+
+	public Integer getSite() {
+		return site;
+	}
+
+	public void setSite(Integer site) {
+		this.site = site;
+	}
+
+	public Integer getIddatacontext() {
+		return iddatacontext;
+	}
+
+	public void setIddatacontext(Integer iddatacontext) {
+		this.iddatacontext = iddatacontext;
+	}
+
+	public Integer getIdeuser() {
+		return ideuser;
+	}
+
+	public void setIdeuser(Integer ideuser) {
+		this.ideuser = ideuser;
+	}
+
+	public DataContext getDatacontext() {
+		return datacontext;
+	}
+
+	public void setDatacontext(DataContext datacontext) {
+		this.datacontext = datacontext;
+	}
+
+	public PhEUserBean getPheuser() {
+		return pheuser;
+	}
+
+	public void setPheuser(PhEUserBean pheuser) {
+		this.pheuser = pheuser;
+	}
+
+}

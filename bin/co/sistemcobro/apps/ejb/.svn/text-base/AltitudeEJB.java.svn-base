@@ -1,0 +1,103 @@
+package co.sistemcobro.apps.ejb;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.ejb.Stateless;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.all.exception.LogicaException;
+import co.sistemcobro.altitude.bean.PhCampaignBean;
+import co.sistemcobro.apps.bean.Datepart;
+import co.sistemcobro.apps.bean.Storage;
+import co.sistemcobro.apps.bean.TerminationStatus;
+import co.sistemcobro.apps.dao.CampanaUsuarioDAO;
+import co.sistemcobro.apps.dao.DatepartDAO;
+import co.sistemcobro.apps.dao.StorageDAO;
+import co.sistemcobro.apps.dao.TerminationStatusDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+@Stateless
+public class AltitudeEJB extends BaseEJB {
+
+	public AltitudeEJB() {
+	}
+
+	public List<PhCampaignBean> getCampanasPorUsuario(Integer idusuario)
+			throws LogicaException {
+
+		CampanaUsuarioDAO campanaUsuarioDAO = new CampanaUsuarioDAO(dc_apps);
+		List<PhCampaignBean> campaigns = new ArrayList<PhCampaignBean>();
+
+		try {
+			campaigns = campanaUsuarioDAO.getCampanasPorUsuario(idusuario);
+
+		} catch (DatoException e) {
+			throw new LogicaException(e.toString(), e.fillInStackTrace());
+		}
+		return campaigns;
+	}
+
+	public List<Datepart> getDatepart(String iddatepart) throws LogicaException {
+
+		DatepartDAO datepartDAO = new DatepartDAO(dc_apps);
+		List<Datepart> dateparts = new ArrayList<Datepart>();
+
+		try {
+			dateparts = datepartDAO.getDatepart(iddatepart);
+
+		} catch (DatoException e) {
+			throw new LogicaException(e.toString(), e.fillInStackTrace());
+		}
+		return dateparts;
+	}
+
+	public List<TerminationStatus> getTerminationsStatus()
+			throws LogicaException {
+
+		TerminationStatusDAO terminationStatusDAO = new TerminationStatusDAO(
+				dc_apps);
+		List<TerminationStatus> terminationsStatus = new ArrayList<TerminationStatus>();
+
+		try {
+			terminationsStatus = terminationStatusDAO.getTerminationsStatus();
+
+		} catch (DatoException e) {
+			throw new LogicaException(e.toString(), e.fillInStackTrace());
+		}
+		return terminationsStatus;
+	}
+
+	public List<Storage> getStorages() throws LogicaException {
+
+		StorageDAO storageDAO = new StorageDAO(dc_apps);
+		List<Storage> storages = new ArrayList<Storage>();
+
+		try {
+			storages = storageDAO.getStorages();
+
+		} catch (DatoException e) {
+			throw new LogicaException(e.toString(), e.fillInStackTrace());
+		}
+		return storages;
+	}
+
+	public Storage getStoragePorId(Integer idstorage) throws LogicaException {
+
+		StorageDAO storageDAO = new StorageDAO(dc_apps);
+		Storage storage = new Storage();
+
+		try {
+			storage = storageDAO.getStoragePorId(idstorage);
+
+		} catch (DatoException e) {
+			throw new LogicaException(e.toString(), e.fillInStackTrace());
+		}
+		return storage;
+	}
+
+}

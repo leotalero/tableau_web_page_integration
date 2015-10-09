@@ -1,0 +1,29 @@
+package co.sistemcobro.altitude.bean;
+
+/**
+ * 
+ * @author Fabio Alexander Orjuela Diaz
+ * 
+ */
+public class CtNaturaBean extends CtBean {
+
+	private String ctcedula;
+	private PhContactBean contacto;
+
+	public String getCtcedula() {
+		return ctcedula;
+	}
+
+	public void setCtcedula(String ctcedula) {
+		this.ctcedula = ctcedula;
+	}
+
+	public PhContactBean getContacto() {
+		return contacto;
+	}
+
+	public void setContacto(PhContactBean contacto) {
+		this.contacto = contacto;
+	}
+
+}

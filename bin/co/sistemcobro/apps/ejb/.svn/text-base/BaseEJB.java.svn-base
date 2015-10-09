@@ -1,0 +1,20 @@
+package co.sistemcobro.apps.ejb;
+
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+
+public class BaseEJB {
+
+	@Resource(mappedName = "dc_apps")
+	protected DataSource dc_apps;
+
+	@Resource(mappedName = "dg_apps")
+	protected DataSource dg_apps;
+}
+ 

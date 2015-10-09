@@ -1,0 +1,105 @@
+package co.sistemcobro.apps.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.apps.bean.Storage;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class StorageDAO extends BaseDAO {
+
+	// private Logger logger = Logger.getLogger(TerminationStatusDAO.class);
+
+	public StorageDAO() {
+	}
+
+	public StorageDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<Storage> getStorages() throws DatoException {
+
+		List<Storage> storages = new ArrayList<Storage>();
+		Storage storage;
+
+		String queryDateparts = "select idstorage, nombre, servidor, usuario, clave, ruta, orden, idusuariocrea, fechacrea, estado "
+				+ "from altitude.storage where estado=2 order by orden asc ";
+
+		try {
+
+			con = ds.getConnection();
+			ps = con.prepareStatement(queryDateparts);
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				int cont = 1;
+				storage = new Storage();
+				storage.setIdstorage(rs.getInt(cont++));
+				storage.setNombre(rs.getString(cont++));
+				storage.setServidor(rs.getString(cont++));
+				storage.setUsuario(rs.getString(cont++));
+				storage.setClave(rs.getString(cont++));
+				storage.setRuta(rs.getString(cont++));
+				storage.setOrden(rs.getInt(cont++));
+				storage.setIdusuariocrea(rs.getInt(cont++));
+				storage.setFechacrea(rs.getTimestamp(cont++));
+				storage.setEstado(rs.getInt(cont++));
+				storages.add(storage);
+			}
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return storages;
+	}
+
+	public Storage getStoragePorId(Integer idstorage) throws DatoException {
+		Storage storage = new Storage();
+
+		String queryDateparts = "select idstorage, nombre, servidor, usuario, clave, ruta, orden, idusuariocrea, fechacrea, estado "
+				+ "from altitude.storage where idstorage=? ";
+
+		try {
+
+			con = ds.getConnection();
+			ps = con.prepareStatement(queryDateparts);
+			ps.setInt(1, idstorage);
+			rs = ps.executeQuery();
+
+			if (rs.next()) {
+				int cont = 1;
+				storage.setIdstorage(rs.getInt(cont++));
+				storage.setNombre(rs.getString(cont++));
+				storage.setServidor(rs.getString(cont++));
+				storage.setUsuario(rs.getString(cont++));
+				storage.setClave(rs.getString(cont++));
+				storage.setRuta(rs.getString(cont++));
+				storage.setOrden(rs.getInt(cont++));
+				storage.setIdusuariocrea(rs.getInt(cont++));
+				storage.setFechacrea(rs.getTimestamp(cont++));
+				storage.setEstado(rs.getInt(cont++));
+			}
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return storage;
+	}
+
+}

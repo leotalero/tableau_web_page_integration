@@ -1,0 +1,27 @@
+package co.sistemcobro.apps.bean;
+
+public class Origin {
+
+	private Integer idorigin;
+	private String nombre;
+
+	public Origin() {
+	}
+
+	public Integer getIdorigin() {
+		return idorigin;
+	}
+
+	public void setIdorigin(Integer idorigin) {
+		this.idorigin = idorigin;
+	}
+
+	public String getNombre() {
+		return nombre;
+	}
+
+	public void setNombre(String nombre) {
+		this.nombre = nombre;
+	}
+
+}

@@ -1,0 +1,107 @@
+package co.sistemcobro.constelacion.dao;
+
+import java.math.BigInteger;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.constante.EstadoEnum;
+import co.sistemcobro.constelacion.bean.Cargue;
+import co.sistemcobro.constelacion.bean.CargueTipo;
+import co.sistemcobro.constelacion.bean.DimensionArea;
+import co.sistemcobro.constelacion.bean.DimensionIndicador;
+import co.sistemcobro.constelacion.bean.DimensionTiempoTipo;
+import co.sistemcobro.constelacion.bean.DimensionUsuario;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class DimensionUsuarioDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(DimensionUsuarioDAO.class);
+
+	public DimensionUsuarioDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	private static String SQL_DIMENSION_USUARIO_ID = "select du.iddimensionusuario, du.numeroidentificacion, du.nombre, du.estado "
+			+ "from constelacion.dimension_usuario du where du.iddimensionusuario = ? ";
+	
+	public DimensionUsuario getUsuarioPorId(Integer idusuario) {
+
+		DimensionUsuario usuario = new DimensionUsuario();
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_DIMENSION_USUARIO_ID.toString());
+			ps.setInt(1, idusuario);
+			
+			rs = ps.executeQuery();
+			logger.info("SQL_DIMENSION_USUARIO_ID: "+ps.toString());
+				
+
+
+				
+				while (rs.next()) {
+					BigInteger iddimensionusuario = new BigInteger(rs.getString(1));				
+					usuario.setIddimensionusuario(iddimensionusuario);
+					logger.info("iddimensionusuario "+iddimensionusuario);
+					
+					BigInteger numeroidentificacion = new BigInteger(rs.getString(2));
+					logger.info("numeroidentificacion " + numeroidentificacion);
+					usuario.setNumeroidentificacion(numeroidentificacion);
+					usuario.setNombre(rs.getString(3));
+					usuario.setEstado(rs.getShort(4));
+				}
+				
+				
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return usuario;
+
+	}
+	
+	private static String SQL_VERIFICA_DIMENSION_USUARIO = "select ci.numeroidentificacion from constelacion.cargue_indicador ci \r\n" + 
+			"left join constelacion.dimension_usuario du on ci.numeroidentificacion = du.numeroidentificacion \r\n" + 
+			"where du.numeroidentificacion is null and ci.idcargue = ? \r\n" + 
+			"group by ci.numeroidentificacion ";
+	
+	public List<DimensionUsuario> getVerificarUsuario(Integer idcargue) {
+
+		List<DimensionUsuario> usuarios = new ArrayList<DimensionUsuario>();
+		DimensionUsuario usuario = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_VERIFICA_DIMENSION_USUARIO.toString());
+			ps.setInt(1, idcargue);
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				usuario = new DimensionUsuario();
+				BigInteger iddimensionusuario = new BigInteger(Integer.toString(rs.getInt(1)));
+				usuario.setIddimensionusuario(iddimensionusuario);
+				usuarios.add(usuario);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return usuarios;
+
+	}
+
+}

@@ -1,0 +1,60 @@
+package co.sistemcobro.constelacion.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.constante.EstadoEnum;
+import co.sistemcobro.constelacion.bean.CargueTipo;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class CargueTipoDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(CargueTipoDAO.class);
+
+	public CargueTipoDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	private static String SQL_CARGUES_TIPOS = "select idcarguetipo, nombrecarguetipo, estado "
+			+ "from constelacion.cargue_tipo where estado=? ";
+	
+	public List<CargueTipo> getCarguesTipos() {
+
+		List<CargueTipo> carguetipos = new ArrayList<CargueTipo>();
+		CargueTipo carguetipo = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_CARGUES_TIPOS.toString());
+			ps.setInt(1, EstadoEnum.ACTIVO.getIndex());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				carguetipo = new CargueTipo();
+				carguetipo.setIdcarguetipo(rs.getInt(1));
+				carguetipo.setNombre(rs.getString(2));
+				carguetipo.setEstado(rs.getShort(3));
+				carguetipos.add(carguetipo);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return carguetipos;
+
+	}
+
+}

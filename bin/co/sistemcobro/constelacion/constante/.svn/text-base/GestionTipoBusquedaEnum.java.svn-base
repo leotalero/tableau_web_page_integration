@@ -1,0 +1,42 @@
+package co.sistemcobro.constelacion.constante;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
+public enum GestionTipoBusquedaEnum {
+	FECHA_CREACION(1), CEDULA(2), CUSTCODE(3), NOMBRECLIENTE(4);
+
+	public static final Map<Integer, GestionTipoBusquedaEnum> mapByID = new HashMap<Integer, GestionTipoBusquedaEnum>();
+	public static final Map<String, GestionTipoBusquedaEnum> mapByNAME = new HashMap<String, GestionTipoBusquedaEnum>();
+
+	static {
+		for (GestionTipoBusquedaEnum s : EnumSet.allOf(GestionTipoBusquedaEnum.class)) {
+			mapByID.put(s.getIndex(), s);
+			mapByNAME.put(s.name(), s);
+		}
+	}
+
+	private int index;
+
+	GestionTipoBusquedaEnum(int index) {
+		this.index = index;
+	}
+
+	public int getIndex() {
+		return index;
+	}
+
+	public String getIndexString() {
+		return String.valueOf(index);
+	}
+
+	public static GestionTipoBusquedaEnum get(int id) {
+		return mapByID.get(id);
+	}
+
+	public static GestionTipoBusquedaEnum get(String name) {
+		return mapByNAME.get(name);
+	}
+
+}

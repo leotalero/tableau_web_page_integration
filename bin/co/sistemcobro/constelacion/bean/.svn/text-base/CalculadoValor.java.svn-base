@@ -1,0 +1,74 @@
+package co.sistemcobro.constelacion.bean;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+
+public class CalculadoValor {
+
+	private BigDecimal valorindicador;
+	private BigDecimal valormeta;
+	
+	private DimensionIndicador indicador;
+
+	public BigDecimal getValorindicador() {
+		return valorindicador;
+	}
+
+	public void setValorindicador(BigDecimal valorindicador) {
+		this.valorindicador = valorindicador;
+	}
+
+	public BigDecimal getValormeta() {
+		return valormeta;
+	}
+
+	public void setValormeta(BigDecimal valormeta) {
+		this.valormeta = valormeta;
+	}
+	
+	public DimensionIndicador getIndicador() {
+		return indicador;
+	}
+
+	public void setIndicador(DimensionIndicador indicador) {
+		this.indicador = indicador;
+	}
+
+	public BigDecimal getPorcentaje() {
+		BigDecimal porcentaje = null;
+		
+		if (valormeta != null && valormeta.compareTo(new BigDecimal(0))!=0) {
+			porcentaje = (getFormato(indicador.getFormatovalorindicador(), valorindicador).divide(getFormato(indicador.getFormatovalormeta(), valormeta), 9, RoundingMode.HALF_UP)).multiply(new BigDecimal(100));
+			porcentaje = getFormato(indicador.getFormatovalorporcentaje(), porcentaje);
+		}
+		return porcentaje;
+	}
+	
+	public String getSemaforo(){
+		String semaforo = "";
+		BigDecimal porcentaje = getPorcentaje();
+		if(null != porcentaje && null != indicador){
+			if(porcentaje.compareTo(indicador.getPorcentajeverdeminimo()) >= 0 && porcentaje.compareTo(indicador.getPorcentajeverde()) <= 0){
+				semaforo = "verde.gif";
+			}else if(porcentaje.compareTo(indicador.getPorcentajeamarillominimo())>=0 && porcentaje.compareTo(indicador.getPorcentajeamarillo()) < 0){
+				semaforo = "ambar.gif";
+			}else if(porcentaje.compareTo(indicador.getPorcentajerojominimo())>=0 && porcentaje.compareTo(indicador.getPorcentajerojo()) < 0){
+				semaforo = "rojo.gif";
+			}
+		}
+		return semaforo;
+		
+	}
+	
+	public BigDecimal getFormato(String formato,BigDecimal numero){
+		
+		BigDecimal numeroFomateado;
+		DecimalFormat formatoNumero = new DecimalFormat(formato);
+		numeroFomateado = new BigDecimal(formatoNumero.format(numero).toString().replaceAll(",", "."));
+		
+		return numeroFomateado;
+		
+	}
+
+}

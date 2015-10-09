@@ -1,0 +1,26 @@
+package co.sistemcobro.constelacion.constante;
+
+public class ConstanteConstelacion {
+
+	public static final String FILE_CONFIG_CONSTELACION = "config_constelacion";
+	public static String ROOT_FILE_TEMPORARY = "";
+	public static String USUARIO_SESSION = "usuariosession";
+	public static String APLICACION_SESSION = "aplicacionsession";
+
+	public String getUSUARIO_SESSION() {
+			return USUARIO_SESSION;
+		}
+
+		public void setUSUARIO_SESSION(String uSUARIO_SESSION) {
+			USUARIO_SESSION = uSUARIO_SESSION;
+		}
+
+	public String getAPLICACION_SESSION() {
+			return APLICACION_SESSION;
+		}
+
+		public void setAPLICACION_SESSION(String aPLICACION_SESSION) {
+			APLICACION_SESSION = aPLICACION_SESSION;
+		}
+
+}

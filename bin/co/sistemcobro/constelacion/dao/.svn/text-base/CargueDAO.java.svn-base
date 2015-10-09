@@ -1,0 +1,144 @@
+package co.sistemcobro.constelacion.dao;
+
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.all.util.Util;
+import co.sistemcobro.constelacion.bean.Cargue;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class CargueDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(CargueDAO.class);
+
+	public CargueDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	private static String SQL_CARGUES_X_BASE = "select c.idcargue, c.idbase, c.idcarguetipo, c.nombrecargue, c.idusuariocrea, c.fechacrea, c.estado "
+			+ "from constelacion.cargue c "
+			+ "inner join constelacion.base b on b.idbase=c.idbase "
+			+ "where c.idbase = ? and c.idcarguetipo=? and c.estado=? "
+			+ "order by c.fechacrea desc ";
+
+	public List<Cargue> getCarguesPorBaseYTipo(Integer idbase,
+			Integer idcarguetipo, Integer estado) {
+
+		List<Cargue> cargues = new ArrayList<Cargue>();
+		Cargue cargue = null;
+		int c = 1;
+		try {
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_CARGUES_X_BASE.toString());
+			ps.setInt(1, idbase);
+			ps.setInt(2, idcarguetipo);
+			ps.setInt(3, estado);
+			rs = ps.executeQuery();
+			
+			while (rs.next()) {
+				c = 1;
+				cargue = new Cargue();
+				cargue.setIdcargue(rs.getInt(c++));
+				cargue.setIdbase(rs.getInt(c++));
+				cargue.setIdcarguetipo(rs.getInt(c++));
+				cargue.setNombre(rs.getString(c++));
+				cargue.setIdusuariocrea(rs.getInt(c++));
+				cargue.setFechacrea(rs.getTimestamp(c++));
+				cargue.setEstado(rs.getShort(c++));
+				cargues.add(cargue);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return cargues;
+
+	}
+
+	private static String SQL_OBLIGACION_DESHABILITAR = "update constelacion.cargue set estado=? where idcargue=?  ";
+
+	public Integer deshabilitarCargues(List<Cargue> cargues)
+			throws DatoException {
+		Integer estatus = 0;
+		int c = 1;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_OBLIGACION_DESHABILITAR.toString());
+			for (Cargue cargue : cargues) {
+				c = 1;
+				ps.setShort(c++, cargue.getEstado());
+				ps.setInt(c++, cargue.getIdcargue());
+				estatus = estatus + ps.executeUpdate();
+
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return estatus;
+
+	}
+
+	private static String SQL_OBLIGACION_INSERT = "insert constelacion.cargue (idbase, idcarguetipo, nombrecargue, registroscargados, registroseliminados, idusuariocrea, fechacrea, estado)  "
+			+ "values (?,?,?,?,?,?,getdate(),?)";
+
+	public Integer insertarCargues(Cargue cargue) throws DatoException {
+		Integer estatus = 0;
+		int c = 1;
+
+		Util.registerConverters();
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_OBLIGACION_INSERT.toString(),
+					Statement.RETURN_GENERATED_KEYS);
+			c = 1;
+
+			ps.setInt(c++, cargue.getIdbase());
+			ps.setInt(c++, cargue.getIdcarguetipo());
+			ps.setString(c++, cargue.getNombre());
+			ps.setInt(c++, cargue.getRegistroscargados());
+			ps.setInt(c++, cargue.getRegistroseliminados());
+			ps.setInt(c++, cargue.getIdusuariocrea());
+			ps.setInt(c++, cargue.getEstado());
+
+			estatus = estatus + ps.executeUpdate();
+
+			rs = ps.getGeneratedKeys();
+			if (rs.next()) {
+				cargue.setIdcargue(rs.getInt(1));
+			} else {
+				throw new SQLException(
+						"Cargue, no se pudo generar su IDCARGUE.");
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return estatus;
+
+	}
+
+}

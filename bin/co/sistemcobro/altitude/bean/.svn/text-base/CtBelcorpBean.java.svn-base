@@ -1,0 +1,29 @@
+package co.sistemcobro.altitude.bean;
+
+/**
+ * 
+ * @author Fabio Alexander Orjuela Diaz
+ * 
+ */
+public class CtBelcorpBean extends CtBean {
+
+	private String ctcuenta;
+	private PhContactBean contacto;
+
+	public String getCtcuenta() {
+		return ctcuenta;
+	}
+
+	public void setCtcuenta(String ctcuenta) {
+		this.ctcuenta = ctcuenta;
+	}
+
+	public PhContactBean getContacto() {
+		return contacto;
+	}
+
+	public void setContacto(PhContactBean contacto) {
+		this.contacto = contacto;
+	}
+
+}

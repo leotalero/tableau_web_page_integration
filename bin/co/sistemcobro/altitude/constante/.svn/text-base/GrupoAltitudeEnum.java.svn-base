@@ -1,0 +1,42 @@
+package co.sistemcobro.altitude.constante;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
+public enum GrupoAltitudeEnum {
+	ADMINISTRADOR(1), ANALISTA_ALTITUDE(36), ANALISTA_GRABACIONES_EXTERNO(76);
+
+	public static final Map<Integer, GrupoAltitudeEnum> mapByID = new HashMap<Integer, GrupoAltitudeEnum>();
+	public static final Map<String, GrupoAltitudeEnum> mapByNAME = new HashMap<String, GrupoAltitudeEnum>();
+
+	static {
+		for (GrupoAltitudeEnum s : EnumSet.allOf(GrupoAltitudeEnum.class)) {
+			mapByID.put(s.getIndex(), s);
+			mapByNAME.put(s.name(), s);
+		}
+	}
+
+	private int index;
+
+	GrupoAltitudeEnum(int index) {
+		this.index = index;
+	}
+
+	public int getIndex() {
+		return index;
+	}
+
+	public String getIndexString() {
+		return String.valueOf(index);
+	}
+
+	public static GrupoAltitudeEnum get(int id) {
+		return mapByID.get(id);
+	}
+
+	public static GrupoAltitudeEnum get(String name) {
+		return mapByNAME.get(name);
+	}
+
+}

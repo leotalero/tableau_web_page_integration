@@ -1,0 +1,43 @@
+package co.sistemcobro.altitude.constante;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
+public enum TimezoneEnum {
+	GMT(1), COLOMBIA(2);
+
+	public static final Map<Integer, TimezoneEnum> mapByID = new HashMap<Integer, TimezoneEnum>();
+	public static final Map<String, TimezoneEnum> mapByNAME = new HashMap<String, TimezoneEnum>();
+
+	static {
+		for (TimezoneEnum s : EnumSet
+				.allOf(TimezoneEnum.class)) {
+			mapByID.put(s.getIndex(), s);
+			mapByNAME.put(s.name(), s);
+		}
+	}
+
+	private int index;
+
+	TimezoneEnum(int index) {
+		this.index = index;
+	}
+
+	public int getIndex() {
+		return index;
+	}
+
+	public String getIndexString() {
+		return String.valueOf(index);
+	}
+
+	public static TimezoneEnum get(int id) {
+		return mapByID.get(id);
+	}
+
+	public static TimezoneEnum get(String name) {
+		return mapByNAME.get(name);
+	}
+
+}

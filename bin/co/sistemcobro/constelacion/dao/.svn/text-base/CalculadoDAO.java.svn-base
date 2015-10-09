@@ -1,0 +1,508 @@
+package co.sistemcobro.constelacion.dao;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.dao.BaseDAO;
+import co.sistemcobro.all.util.Util;
+import co.sistemcobro.constelacion.bean.Calculado;
+import co.sistemcobro.constelacion.bean.CalculadoValor;
+import co.sistemcobro.constelacion.bean.DimensionArea;
+import co.sistemcobro.constelacion.bean.DimensionIndicador;
+import co.sistemcobro.hermes.bean.UsuarioBean;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class CalculadoDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(CalculadoDAO.class);
+
+	public enum FrecuenciaEnum {
+		DIA(8), MES(6), ANIO(4);
+		public static final Map<Integer, FrecuenciaEnum> mapByID = new HashMap<Integer, FrecuenciaEnum>();
+		public static final Map<String, FrecuenciaEnum> mapByNAME = new HashMap<String, FrecuenciaEnum>();
+
+		static {
+			for (FrecuenciaEnum s : EnumSet.allOf(FrecuenciaEnum.class)) {
+				mapByID.put(s.getIndex(), s);
+				mapByNAME.put(s.name(), s);
+			}
+		}
+
+		private int index;
+
+		FrecuenciaEnum(int index) {
+			this.index = index;
+		}
+
+		public int getIndex() {
+			return index;
+		}
+
+		public String getIndexString() {
+			return String.valueOf(index);
+		}
+
+		public static FrecuenciaEnum get(int id) {
+			return mapByID.get(id);
+		}
+
+		public static FrecuenciaEnum get(String name) {
+			return mapByNAME.get(name);
+		}
+
+	}
+	
+	public CalculadoDAO(DataSource ds) {
+		this.ds = ds;
+	}	
+
+	public List<Calculado> getKpiPorUsuario(Calendar desde,
+			Calendar hasta, FrecuenciaEnum periodo,Integer idarea,Integer idtiempotipo, Integer idindicador) {
+		List<Calculado> lista = new ArrayList<Calculado>();
+		try {
+			con = ds.getConnection();
+
+			Calendar desde_tmp = Calendar.getInstance();
+			desde_tmp.setTime(desde.getTime());
+			String idperiodo = "";
+			String dia_rotulo = "";
+			String dia_rotulo_max = "";
+			String decode = "";
+			int intervalo = 0;
+
+			while (desde_tmp.before(hasta)) {
+				// String idperiodo = formatoDIA.format(fechaNac.getTime());
+				idperiodo = "";
+				if (periodo.getIndex() == FrecuenciaEnum.DIA.getIndex()) {
+					intervalo++;
+					idperiodo = Util.calendarToString(desde_tmp, "yyyyMMdd",
+							Locale.getDefault());
+					desde_tmp.add(Calendar.DAY_OF_MONTH, 1);
+
+				} else if (periodo.getIndex() == FrecuenciaEnum.MES.getIndex()) {
+					intervalo++;
+					idperiodo = Util.calendarToString(desde_tmp, "yyyyMM",
+							Locale.getDefault());
+					desde_tmp.add(Calendar.MONTH, 1);
+
+				} else if (periodo.getIndex() == FrecuenciaEnum.ANIO.getIndex()) {
+					intervalo++;
+					idperiodo = Util.calendarToString(desde_tmp, "yyyy",
+							Locale.getDefault());
+					desde_tmp.add(Calendar.YEAR, 1);
+
+				} else {
+					break;
+				}
+				dia_rotulo += ", P1_" + idperiodo+", P2_" + idperiodo;
+				dia_rotulo_max += ", SUM (P1_" + idperiodo + ") AS P1_"
+						+ idperiodo+", SUM (P2_" + idperiodo + ") AS P2_"
+								+ idperiodo;
+				decode += ", CASE WHEN t.fecha='" + idperiodo
+						+ "' THEN valorindicador ELSE 0 END AS P1_" + idperiodo+", CASE WHEN t.fecha='" + idperiodo
+						+ "' THEN valormeta ELSE 0 END AS P2_" + idperiodo;
+				
+	
+				
+				
+
+				// System.out.println("Desde: "
+				// + Util.calendarToString(desde_tmp, "yyyyMMdd",
+				// Locale.getDefault()));
+
+			}
+
+			if (periodo.getIndex() == FrecuenciaEnum.DIA.getIndex()) {
+				intervalo++;
+				idperiodo = "";
+				idperiodo = Util.calendarToString(desde_tmp, "yyyyMMdd",
+						Locale.getDefault());
+				dia_rotulo += ", P1_" + idperiodo+", P2_" + idperiodo;
+				dia_rotulo_max += ", SUM (P1_" + idperiodo + ") AS P1_"
+						+ idperiodo+", SUM (P2_" + idperiodo + ") AS P2_"
+								+ idperiodo;
+				decode += ", CASE WHEN t.fecha='" + idperiodo
+						+ "' THEN valorindicador ELSE 0 END AS P1_" + idperiodo+", CASE WHEN t.fecha='" + idperiodo
+						+ "' THEN valormeta ELSE 0 END AS P2_" + idperiodo;
+			} else if (periodo.getIndex() == FrecuenciaEnum.MES.getIndex()) {
+				if (desde.get(Calendar.DAY_OF_MONTH) >= hasta
+						.get(Calendar.DAY_OF_MONTH)) {
+					intervalo++;
+					idperiodo = "";
+					idperiodo = Util.calendarToString(desde_tmp, "yyyyMM",
+							Locale.getDefault());
+					dia_rotulo += ", P1_" + idperiodo+", P2_" + idperiodo;
+					dia_rotulo_max += ", SUM (P1_" + idperiodo + ") AS P1_"
+							+ idperiodo + ", SUM (P2_" + idperiodo + ") AS P2_"
+									+ idperiodo;
+					decode += ", CASE WHEN t.fecha='" + idperiodo
+							+ "' THEN valorindicador ELSE 0 END AS P1_" + idperiodo+", CASE WHEN t.fecha='" + idperiodo
+							+ "' THEN valormeta ELSE 0 END AS P2_" + idperiodo;;
+					
+				}
+			} else if (periodo.getIndex() == FrecuenciaEnum.ANIO.getIndex()) {
+				if ((desde.get(Calendar.MONTH) >= hasta.get(Calendar.MONTH) && desde
+						.get(Calendar.DAY_OF_MONTH) >= hasta
+						.get(Calendar.DAY_OF_MONTH))
+						|| intervalo == 0) {
+					intervalo++;
+					idperiodo = "";
+					idperiodo = Util.calendarToString(desde_tmp, "yyyy",
+							Locale.getDefault());
+					dia_rotulo += ", P1_" + idperiodo+", P2_" + idperiodo;
+					dia_rotulo_max += ", SUM (P1_" + idperiodo + ") AS P1_"
+							+ idperiodo+", SUM (P2_" + idperiodo + ") AS P2_"
+									+ idperiodo;
+					decode += ", CASE WHEN t.fecha='" + idperiodo
+							+ "' THEN valorindicador ELSE 0 END AS P1_" + idperiodo+ ", CASE WHEN t.fecha='" + idperiodo
+							+ "' THEN valormeta ELSE 0 END AS P2_" + idperiodo;
+				}
+			}
+
+			StringBuilder query = new StringBuilder()
+					.append("Select f.iddimensionusuario,du.numeroidentificacion, du.nombre ,f.iddimensionindicador")
+					.append(",di1.nombreindicador ,di1.porcentajerojominimo ,di1.porcentajerojomaximo ,di1.porcentajeamarillominimo ,di1.porcentajeamarillomaximo ,di1.porcentajeverdeminimo ,di1.porcentajeverdemaximo  ")
+					.append(",di1.formatovalorindicador ,di1.formatovalormeta ,di1.formatovalorporcentaje ,di1.unidadnombre ")
+					.append(",di1.unidadsimbolo ,di1.idusuariocrea ,di1.fechacrea ,di1.estado")
+					.append(dia_rotulo)
+					.append(" from (  ")
+					.append(" select m.iddimensionusuario, m.iddimensionindicador ")
+					.append(dia_rotulo_max)
+					.append(" FROM ( ")
+					.append(" select t.iddimensionusuario, t.iddimensionindicador ")
+					.append(decode)
+					.append(" FROM ( select convert(nvarchar("
+							+ periodo.getIndex()
+							+ "),dt.fecha,112) as fecha, du.iddimensionusuario, di.iddimensionindicador, ho.valorindicador ,ho.valormeta ")
+					.append(" FROM constelacion.hecho_operacion ho ")
+					.append(" inner join constelacion.dimension_usuario du on du.iddimensionusuario = ho.iddimensionusuario ")
+					.append(" inner join constelacion.dimension_tiempo dt on dt.iddimensiontiempo = ho.iddimensiontiempo ")
+					.append(" inner join constelacion.dimension_area da on da.iddimensionarea = ho.iddimensionarea ")
+					.append(" inner join constelacion.dimension_indicador di on di.iddimensionindicador = ho.iddimensionindicador ")
+					.append(" where ho.iddimensionarea in (?)  ")
+					.append(" and ho.iddimensionindicador = ?   ")
+					.append(" and dt.iddimensiontiempotipo = ?   ")
+					.append(" and dt.fecha >= convert(datetime,?,112) ")
+					.append(" and dt.fecha < DATEADD(day, 1, convert(datetime,?,112))) as t) as m group by m.iddimensionusuario, m.iddimensionindicador")
+					.append(" ) as f ")
+					.append(" inner join constelacion.dimension_usuario du on f.iddimensionusuario = du.iddimensionusuario ")
+					.append(" inner join constelacion.dimension_indicador di1 on f.iddimensionindicador = di1.iddimensionindicador ");
+
+			logger.info("QUERY REPORTE: " + query);
+
+			ps = con.prepareStatement(query.toString());
+
+			ps.setInt(1,idarea);
+			ps.setInt(2,idindicador);
+			ps.setInt(3,idtiempotipo);
+			ps.setString(
+					4,
+					Util.calendarToString(desde, "yyyyMMdd",
+							Locale.getDefault()));
+			ps.setString(
+					5,
+					Util.calendarToString(hasta, "yyyyMMdd",
+							Locale.getDefault()));
+			
+			
+			
+			rs = ps.executeQuery();
+
+			Calculado calculado = null;
+			UsuarioBean usuario = null;
+			DimensionIndicador indicador = new DimensionIndicador();
+			logger.info("Reporte diario> fecha inicio:" + desde.getTime()
+					+ " , fechafin:" + hasta.getTime() + " , dias:" + intervalo);
+			int t = 1;
+			while (rs.next()) {
+				t = 1;
+				usuario = new UsuarioBean();
+				usuario.setCodusuario(rs.getInt(t++));
+				usuario.setUsuario(rs.getString(t++));
+				usuario.setNombre(rs.getString(t++));
+				
+				BigInteger iddimensionindicador = new BigInteger(Integer.toString(rs.getInt(t++)));
+				indicador.setIddimensionindicador(iddimensionindicador);
+				indicador.setNombreindicador(rs.getString(t++));
+				
+				BigDecimal porcentajerojominimo = new BigDecimal(Integer.toString(rs.getInt(t++)));
+				indicador.setPorcentajerojominimo(porcentajerojominimo);
+				BigDecimal porcentajerojo = new BigDecimal(Integer.toString(rs.getInt(t++)));
+				indicador.setPorcentajerojo(porcentajerojo);
+				
+				BigDecimal porcentajeamarillominimo = new BigDecimal(Integer.toString(rs.getInt(t++)));
+				indicador.setPorcentajeamarillominimo(porcentajeamarillominimo);
+				BigDecimal porcentajeamarillo = new BigDecimal(Integer.toString(rs.getInt(t++)));
+				indicador.setPorcentajeamarillo(porcentajeamarillo);
+				
+				BigDecimal porcentajeverdeminimo = new BigDecimal(Integer.toString(rs.getInt(t++)));
+				indicador.setPorcentajeverdeminimo(porcentajeverdeminimo);
+				BigDecimal porcentajeverde = new BigDecimal(Integer.toString(rs.getInt(t++)));
+				indicador.setPorcentajeverde(porcentajeverde);
+				
+				indicador.setFormatovalorindicador(rs.getString(t++));
+				indicador.setFormatovalormeta(rs.getString(t++));
+				indicador.setFormatovalorporcentaje(rs.getString(t++));
+				indicador.setUnidadnombre(rs.getString(t++));
+				
+				indicador.setUnidadsimbolo(rs.getString(t++));
+				
+				indicador.setIdusuariocrea(rs.getInt(t++));
+				indicador.setFechacrea(rs.getTimestamp(t++));
+				indicador.setEstado(rs.getShort(t++));
+				
+				calculado = new Calculado();
+
+				List<CalculadoValor> valores = new ArrayList<CalculadoValor>();
+				for (int i = 0; i < intervalo; i++) {
+					CalculadoValor calculadovalor= new CalculadoValor();
+					calculadovalor.setValorindicador(rs.getBigDecimal(t++));
+					calculadovalor.setValormeta(rs.getBigDecimal(t++));
+					calculadovalor.setIndicador(indicador);
+					valores.add(calculadovalor);
+				}
+				calculado.setValores(valores);
+				calculado.setUsuario(usuario);
+				calculado.setIndicador(indicador);
+				lista.add(calculado);
+			}
+
+		} catch (Exception e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return lista;
+	}
+	
+	public List<Calculado> getKpiPorIdUsuario(Calendar desde,
+			Calendar hasta, FrecuenciaEnum periodo,Integer idusuario) {
+		List<Calculado> lista = new ArrayList<Calculado>();
+		try {
+			con = ds.getConnection();
+
+			Calendar desde_tmp = Calendar.getInstance();
+			desde_tmp.setTime(desde.getTime());
+			String idperiodo = "";
+			String dia_rotulo = "";
+			String dia_rotulo_max = "";
+			String decode = "";
+			int intervalo = 0;
+
+			while (desde_tmp.before(hasta)) {
+				// String idperiodo = formatoDIA.format(fechaNac.getTime());
+				idperiodo = "";
+				if (periodo.getIndex() == FrecuenciaEnum.DIA.getIndex()) {
+					intervalo++;
+					idperiodo = Util.calendarToString(desde_tmp, "yyyyMMdd",
+							Locale.getDefault());
+					desde_tmp.add(Calendar.DAY_OF_MONTH, 1);
+
+				} else if (periodo.getIndex() == FrecuenciaEnum.MES.getIndex()) {
+					intervalo++;
+					idperiodo = Util.calendarToString(desde_tmp, "yyyyMM",
+							Locale.getDefault());
+					desde_tmp.add(Calendar.MONTH, 1);
+
+				} else if (periodo.getIndex() == FrecuenciaEnum.ANIO.getIndex()) {
+					intervalo++;
+					idperiodo = Util.calendarToString(desde_tmp, "yyyy",
+							Locale.getDefault());
+					desde_tmp.add(Calendar.YEAR, 1);
+
+				} else {
+					break;
+				}
+				dia_rotulo += ", P1_" + idperiodo+", P2_" + idperiodo;
+				dia_rotulo_max += ", SUM (P1_" + idperiodo + ") AS P1_"
+						+ idperiodo+", SUM (P2_" + idperiodo + ") AS P2_"
+								+ idperiodo;
+				decode += ", CASE WHEN t.fecha='" + idperiodo
+						+ "' THEN valorindicador ELSE 0 END AS P1_" + idperiodo+", CASE WHEN t.fecha='" + idperiodo
+						+ "' THEN valormeta ELSE 0 END AS P2_" + idperiodo;
+				
+	
+				
+				
+
+				// System.out.println("Desde: "
+				// + Util.calendarToString(desde_tmp, "yyyyMMdd",
+				// Locale.getDefault()));
+
+			}
+
+			if (periodo.getIndex() == FrecuenciaEnum.DIA.getIndex()) {
+				intervalo++;
+				idperiodo = "";
+				idperiodo = Util.calendarToString(desde_tmp, "yyyyMMdd",
+						Locale.getDefault());
+				dia_rotulo += ", P1_" + idperiodo+", P2_" + idperiodo;
+				dia_rotulo_max += ", SUM (P1_" + idperiodo + ") AS P1_"
+						+ idperiodo+", SUM (P2_" + idperiodo + ") AS P2_"
+								+ idperiodo;
+				decode += ", CASE WHEN t.fecha='" + idperiodo
+						+ "' THEN valorindicador ELSE 0 END AS P1_" + idperiodo+", CASE WHEN t.fecha='" + idperiodo
+						+ "' THEN valormeta ELSE 0 END AS P2_" + idperiodo;
+			} else if (periodo.getIndex() == FrecuenciaEnum.MES.getIndex()) {
+				if (desde.get(Calendar.DAY_OF_MONTH) >= hasta
+						.get(Calendar.DAY_OF_MONTH)) {
+					intervalo++;
+					idperiodo = "";
+					idperiodo = Util.calendarToString(desde_tmp, "yyyyMM",
+							Locale.getDefault());
+					dia_rotulo += ", P1_" + idperiodo+", P2_" + idperiodo;
+					dia_rotulo_max += ", SUM (P1_" + idperiodo + ") AS P1_"
+							+ idperiodo + ", SUM (P2_" + idperiodo + ") AS P2_"
+									+ idperiodo;
+					decode += ", CASE WHEN t.fecha='" + idperiodo
+							+ "' THEN valorindicador ELSE 0 END AS P1_" + idperiodo+", CASE WHEN t.fecha='" + idperiodo
+							+ "' THEN valormeta ELSE 0 END AS P2_" + idperiodo;;
+					
+				}
+			} else if (periodo.getIndex() == FrecuenciaEnum.ANIO.getIndex()) {
+				if ((desde.get(Calendar.MONTH) >= hasta.get(Calendar.MONTH) && desde
+						.get(Calendar.DAY_OF_MONTH) >= hasta
+						.get(Calendar.DAY_OF_MONTH))
+						|| intervalo == 0) {
+					intervalo++;
+					idperiodo = "";
+					idperiodo = Util.calendarToString(desde_tmp, "yyyy",
+							Locale.getDefault());
+					dia_rotulo += ", P1_" + idperiodo+", P2_" + idperiodo;
+					dia_rotulo_max += ", SUM (P1_" + idperiodo + ") AS P1_"
+							+ idperiodo+", SUM (P2_" + idperiodo + ") AS P2_"
+									+ idperiodo;
+					decode += ", CASE WHEN t.fecha='" + idperiodo
+							+ "' THEN valorindicador ELSE 0 END AS P1_" + idperiodo+ ", CASE WHEN t.fecha='" + idperiodo
+							+ "' THEN valormeta ELSE 0 END AS P2_" + idperiodo;
+				}
+			}
+
+			StringBuilder query = new StringBuilder()
+					.append("Select da1.nombrearea , di1.nombreindicador  ")
+					.append(",di1.porcentajerojominimo ,di1.porcentajerojomaximo ,di1.porcentajeamarillominimo ,di1.porcentajeamarillomaximo ,di1.porcentajeverdeminimo ,di1.porcentajeverdemaximo  ")
+					.append(",di1.formatovalorindicador ,di1.formatovalormeta ,di1.formatovalorporcentaje ,di1.unidadnombre ")
+					.append(",di1.unidadsimbolo ,di1.idusuariocrea ,di1.fechacrea ,di1.estado")
+					.append(dia_rotulo)
+					.append(" from (  ")
+					.append(" select m.iddimensionarea , m.iddimensionindicador ")
+					.append(dia_rotulo_max)
+					.append(" FROM ( ")
+					.append(" select t.iddimensionarea , t.iddimensionindicador  ")
+					.append(decode)
+					.append(" FROM ( select convert(nvarchar("
+							+ periodo.getIndex()
+							+ "),dt.fecha,112) as fecha, da.iddimensionarea ,di.iddimensionindicador, ho.valorindicador ,ho.valormeta ")
+					.append(" FROM constelacion.hecho_operacion ho ")
+					.append(" inner join constelacion.dimension_usuario du on du.iddimensionusuario = ho.iddimensionusuario ")
+					.append(" inner join constelacion.dimension_tiempo dt on dt.iddimensiontiempo = ho.iddimensiontiempo ")
+					.append(" inner join constelacion.dimension_area da on da.iddimensionarea = ho.iddimensionarea ")
+					.append(" inner join constelacion.dimension_indicador di on di.iddimensionindicador = ho.iddimensionindicador ")
+					.append(" where  ho.iddimensionusuario = ?  ")
+					.append(" and dt.fecha >= convert(datetime,?,112) ")
+					.append(" and dt.fecha < DATEADD(day, 1, convert(datetime,?,112))) as t) as m group by m.iddimensionarea , m.iddimensionindicador ")
+					.append(" ) as f ")
+					.append(" inner join constelacion.dimension_indicador di1 on di1.iddimensionindicador = f.iddimensionindicador")
+					.append(" inner join constelacion.dimension_area da1 on da1.iddimensionarea = f.iddimensionarea")
+					.append(" order by da1.nombrearea");
+					
+
+			logger.info("QUERY REPORTE: " + query);
+
+			ps = con.prepareStatement(query.toString());
+
+			ps.setInt(1,idusuario);
+			ps.setString(
+					2,
+					Util.calendarToString(desde, "yyyyMMdd",
+							Locale.getDefault()));
+			ps.setString(
+					3,
+					Util.calendarToString(hasta, "yyyyMMdd",
+							Locale.getDefault()));
+
+			rs = ps.executeQuery();
+
+			Calculado calculado = null;
+			UsuarioBean usuario = null;
+
+			logger.info("Reporte diario> fecha inicio:" + desde.getTime()
+					+ " , fechafin:" + hasta.getTime() + " , dias:" + intervalo);
+			int t = 1;
+			while (rs.next()) {
+				t = 1;
+				usuario = new UsuarioBean();
+				DimensionIndicador  indicador = new DimensionIndicador();
+				DimensionArea  dimensionarea = new DimensionArea();
+				
+				calculado = new Calculado();
+				dimensionarea.setNombrearea(rs.getString(t++));
+				indicador.setNombreindicador(rs.getString(t++));
+				
+				BigDecimal porcentajerojominimo = new BigDecimal(Integer.toString(rs.getInt(t++)));
+				indicador.setPorcentajerojominimo(porcentajerojominimo);
+				BigDecimal porcentajerojo = new BigDecimal(Integer.toString(rs.getInt(t++)));
+				indicador.setPorcentajerojo(porcentajerojo);
+				
+				BigDecimal porcentajeamarillominimo = new BigDecimal(Integer.toString(rs.getInt(t++)));
+				indicador.setPorcentajeamarillominimo(porcentajeamarillominimo);
+				BigDecimal porcentajeamarillo = new BigDecimal(Integer.toString(rs.getInt(t++)));
+				indicador.setPorcentajeamarillo(porcentajeamarillo);
+				
+				BigDecimal porcentajeverdeminimo = new BigDecimal(Integer.toString(rs.getInt(t++)));
+				indicador.setPorcentajeverdeminimo(porcentajeverdeminimo);
+				BigDecimal porcentajeverde = new BigDecimal(Integer.toString(rs.getInt(t++)));
+				indicador.setPorcentajeverde(porcentajeverde);
+				
+				indicador.setFormatovalorindicador(rs.getString(t++));
+				indicador.setFormatovalormeta(rs.getString(t++));
+				indicador.setFormatovalorporcentaje(rs.getString(t++));
+				indicador.setUnidadnombre(rs.getString(t++));
+				
+				indicador.setUnidadsimbolo(rs.getString(t++));
+				
+				indicador.setIdusuariocrea(rs.getInt(t++));
+				indicador.setFechacrea(rs.getTimestamp(t++));
+				indicador.setEstado(rs.getShort(t++));
+				
+				calculado.setIndicador(indicador);
+				calculado.setArea(dimensionarea);
+				
+				List<CalculadoValor> valores = new ArrayList<CalculadoValor>();
+				for (int i = 0; i < intervalo; i++) {
+					CalculadoValor calculadovalor= new CalculadoValor();
+					calculadovalor.setValorindicador(rs.getBigDecimal(t++));
+					calculadovalor.setValormeta(rs.getBigDecimal(t++));
+					valores.add(calculadovalor);
+					
+				}
+					
+				calculado.setValores(valores);
+				calculado.setUsuario(usuario);
+				
+				lista.add(calculado);
+			}
+
+		} catch (Exception e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return lista;
+	}
+
+}

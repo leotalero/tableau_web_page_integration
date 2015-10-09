@@ -1,0 +1,132 @@
+package co.sistemcobro.constelacion.dao;
+
+import java.math.BigInteger;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.constante.EstadoEnum;
+import co.sistemcobro.constelacion.bean.CargueTipo;
+import co.sistemcobro.constelacion.bean.DimensionArea;
+import co.sistemcobro.constelacion.bean.DimensionUsuario;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class DimensionAreaDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(DimensionAreaDAO.class);
+
+	public DimensionAreaDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	private static String SQL_DIMENSION_AREAS = "select iddimensionarea, nombrearea, estado "
+			+ "from constelacion.dimension_area where estado=? ";
+	
+	public List<DimensionArea> getAreas() {
+
+		List<DimensionArea> carguetipos = new ArrayList<DimensionArea>();
+		DimensionArea dimensionarea = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_DIMENSION_AREAS.toString());
+			ps.setInt(1, EstadoEnum.ACTIVO.getIndex());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				dimensionarea = new DimensionArea();
+				BigInteger iddimensionarea = new BigInteger(Integer.toString(rs.getInt(1)));
+				dimensionarea.setIddimensionarea(iddimensionarea);
+				dimensionarea.setNombrearea(rs.getString(2));
+				dimensionarea.setEstado(rs.getShort(3));
+				carguetipos.add(dimensionarea);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return carguetipos;
+
+	}
+
+	private static String SQL_VERIFICA_DIMENSION_AREA = "select da.iddimensionarea from constelacion.cargue_indicador ci \r\n" + 
+			"left join constelacion.dimension_area da on ci.iddimensionarea = da.iddimensionarea \r\n" + 
+			"where da.iddimensionarea is null \r\n" + 
+			"group by da.iddimensionarea ";
+	
+	public List<DimensionArea> getVerificarArea() {
+
+		List<DimensionArea> areas = new ArrayList<DimensionArea>();
+		DimensionArea area = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_VERIFICA_DIMENSION_AREA.toString());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				area = new DimensionArea();
+				BigInteger iddimensionarea = new BigInteger(Integer.toString(rs.getInt(1)));
+				area.setIddimensionarea(iddimensionarea);
+				areas.add(area);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return areas;
+
+	}
+	
+	private static String SQL_VERIFICA_DIMENSION_AREA_IDCARGUE = "select da.iddimensionarea from constelacion.cargue_indicador ci \r\n" + 
+			"left join constelacion.dimension_area da on ci.iddimensionarea = da.iddimensionarea \r\n" + 
+			"where ci.idcargue = ? \r\n" + 
+			"group by da.iddimensionarea ";
+	
+	public List<DimensionArea> getVerificarAreaPorCargue(Integer idcargue) {
+
+		List<DimensionArea> areas = new ArrayList<DimensionArea>();
+		DimensionArea area = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_VERIFICA_DIMENSION_AREA_IDCARGUE.toString());
+			ps.setInt(1, idcargue);
+			rs = ps.executeQuery();
+
+			logger.info(SQL_VERIFICA_DIMENSION_AREA_IDCARGUE.toString());
+			
+			while (rs.next()) {
+
+				area = new DimensionArea();
+				BigInteger iddimensionarea = new BigInteger(Integer.toString(rs.getInt(1)));
+				area.setIddimensionarea(iddimensionarea);
+				areas.add(area);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return areas;
+
+	}
+	
+}

@@ -1,0 +1,2550 @@
+package co.sistemcobro.altitude.ejb;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.ejb.Stateless;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.all.exception.LogicaException;
+import co.sistemcobro.altitude.bean.ContactPhone;
+import co.sistemcobro.altitude.bean.CtAmapreveBean;
+import co.sistemcobro.altitude.bean.CtBancoOccidenteVentasBean;
+import co.sistemcobro.altitude.bean.CtBancoagrarioBean;
+import co.sistemcobro.altitude.bean.CtBean;
+import co.sistemcobro.altitude.bean.CtBelcorpBean;
+import co.sistemcobro.altitude.bean.CtCarteraEspecialBean;
+import co.sistemcobro.altitude.bean.CtClaro01Bean;
+import co.sistemcobro.altitude.bean.CtClaroadmBean;
+import co.sistemcobro.altitude.bean.CtClarocastigoBean;
+import co.sistemcobro.altitude.bean.CtClaromovilBean;
+import co.sistemcobro.altitude.bean.CtClaropersuBean;
+import co.sistemcobro.altitude.bean.CtClaropjuriBean;
+import co.sistemcobro.altitude.bean.CtClaropymeBean;
+import co.sistemcobro.altitude.bean.CtColsubsidioBean;
+import co.sistemcobro.altitude.bean.CtColsubsidioadBean;
+import co.sistemcobro.altitude.bean.CtColsubsidiocydBean;
+import co.sistemcobro.altitude.bean.CtColsubsidionotificacionBean;
+import co.sistemcobro.altitude.bean.CtCoomevaBean;
+import co.sistemcobro.altitude.bean.CtCoronaBean;
+import co.sistemcobro.altitude.bean.CtDaviviendaBean;
+import co.sistemcobro.altitude.bean.CtElEspectadorVentasBean;
+import co.sistemcobro.altitude.bean.CtEtbBean;
+import co.sistemcobro.altitude.bean.CtEtbventaBean;
+import co.sistemcobro.altitude.bean.CtLapolarBean;
+import co.sistemcobro.altitude.bean.CtMovistarBean;
+import co.sistemcobro.altitude.bean.CtMovistarmovilBean;
+import co.sistemcobro.altitude.bean.CtNaturaBean;
+import co.sistemcobro.altitude.bean.CtPublicarBean;
+import co.sistemcobro.altitude.bean.CtPublicarVentasBean;
+import co.sistemcobro.altitude.bean.CtSegurosbolivarBean;
+import co.sistemcobro.altitude.bean.CtSegurosbolivarPortafolioBean;
+import co.sistemcobro.altitude.bean.CtTelmexVentasBean;
+import co.sistemcobro.altitude.bean.CtTicketRegistroBean;
+import co.sistemcobro.altitude.bean.CtTigoBean;
+import co.sistemcobro.altitude.bean.PhContactBean;
+import co.sistemcobro.altitude.bean.Phone;
+import co.sistemcobro.altitude.constante.AgendamientoTipoBusquedaEnum;
+import co.sistemcobro.altitude.constante.PhoneEnum;
+import co.sistemcobro.altitude.dao.CampaignLogDAO;
+import co.sistemcobro.altitude.dao.ContactPhoneDAO;
+import co.sistemcobro.altitude.dao.CtAmapreveDAO;
+import co.sistemcobro.altitude.dao.CtBancoOccidenteVentasDAO;
+import co.sistemcobro.altitude.dao.CtBancoagrarioDAO;
+import co.sistemcobro.altitude.dao.CtBelcorpDAO;
+import co.sistemcobro.altitude.dao.CtCarteraEspecialDAO;
+import co.sistemcobro.altitude.dao.CtClaro01DAO;
+import co.sistemcobro.altitude.dao.CtClaroadmDAO;
+import co.sistemcobro.altitude.dao.CtClarocastigoDAO;
+import co.sistemcobro.altitude.dao.CtClaromovilDAO;
+import co.sistemcobro.altitude.dao.CtClaropersuDAO;
+import co.sistemcobro.altitude.dao.CtClaropjuriDAO;
+import co.sistemcobro.altitude.dao.CtClaropymeDAO;
+import co.sistemcobro.altitude.dao.CtColsubsidioDAO;
+import co.sistemcobro.altitude.dao.CtColsubsidioadDAO;
+import co.sistemcobro.altitude.dao.CtColsubsidiocydDAO;
+import co.sistemcobro.altitude.dao.CtColsubsidionotificacionDAO;
+import co.sistemcobro.altitude.dao.CtCoomevaDAO;
+import co.sistemcobro.altitude.dao.CtCoronaDAO;
+import co.sistemcobro.altitude.dao.CtDaviviendaDAO;
+import co.sistemcobro.altitude.dao.CtElEspectadorVentasDAO;
+import co.sistemcobro.altitude.dao.CtEtbDAO;
+import co.sistemcobro.altitude.dao.CtEtbventaDAO;
+import co.sistemcobro.altitude.dao.CtLapolarDAO;
+import co.sistemcobro.altitude.dao.CtMovistarDAO;
+import co.sistemcobro.altitude.dao.CtMovistarmovilDAO;
+import co.sistemcobro.altitude.dao.CtNaturaDAO;
+import co.sistemcobro.altitude.dao.CtPublicarDAO;
+import co.sistemcobro.altitude.dao.CtPublicarVentasDAO;
+import co.sistemcobro.altitude.dao.CtSegurosbolivarDAO;
+import co.sistemcobro.altitude.dao.CtSegurosbolivarPortafolioDAO;
+import co.sistemcobro.altitude.dao.CtTelmexVentasDAO;
+import co.sistemcobro.altitude.dao.CtTicketRegistroDAO;
+import co.sistemcobro.altitude.dao.CtTigoDAO;
+import co.sistemcobro.altitude.dao.PhContactDAO;
+import co.sistemcobro.altitude.dao.PhoneDAO;
+
+/**
+ * @author Jony Hurtado
+ */
+@Stateless
+public class PhContactEJB extends BaseEJB {
+	private Logger logger = Logger.getLogger(PhContactEJB.class);
+
+	public PhContactEJB() {}
+
+	public static final String TELEFONO_DEFAULT = "1";
+
+	public Integer insertarTelefonos(Integer codCampana, String campanaNombre, Boolean noVerificarCampanaCerrado, List<ContactPhone> telefonos) throws LogicaException {
+		Integer resultado = 0;
+		// logger.debug("insertarTelefonos()");
+		try {
+			// Valida si la campaña esta cerrada
+			CampaignLogDAO campainglog = new CampaignLogDAO(dc_altitude);
+			if (noVerificarCampanaCerrado || !campainglog.isCampanaAbierta(codCampana)) {
+
+				// actualizamos los teléfonos
+				if (null != telefonos && telefonos.size() > 0) {
+					ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+					resultado = contactPhoneDAO.insertContactPhone(telefonos);
+					if (telefonos.size() == resultado) {
+						logger.info("Se insertarón correctamente " + resultado + " teléfonos en ContactPhone");
+					} else {
+						throw new LogicaException("Solo se insertaron  " + resultado + " de " + telefonos.size() + " telefonos en ContactPhone");
+					}
+
+				}
+			} else {
+				throw new LogicaException("The campaing [" + codCampana + ":" + campanaNombre + "] is open.");
+			}
+		} catch (DatoException e) {
+			throw new LogicaException(e.getMessage(), e);
+		}
+		return resultado;
+	}
+
+	public Integer actualizarTelefonos(Integer codCampana, String campanaNombre, Boolean noVerificarCampanaCerrado, List<ContactPhone> telefonos) throws LogicaException {
+		Integer resultado = 0;
+
+		try {
+			// Valida si la campaña esta cerrada
+			CampaignLogDAO campainglog = new CampaignLogDAO(dc_altitude);
+			if (noVerificarCampanaCerrado || !campainglog.isCampanaAbierta(codCampana)) {
+
+				// actualizamos los teléfonos
+				if (null != telefonos && telefonos.size() > 0) {
+					ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+					resultado = contactPhoneDAO.actualizarContactPhone(telefonos);
+					if (telefonos.size() == resultado) {
+						logger.info("Se actualizarón correctamente " + resultado + " teléfonos en ContactPhone");
+					} else {
+						throw new LogicaException("Solo se actualizaron  " + resultado + " de " + telefonos.size() + " telefonos en ContactPhone");
+					}
+
+				}
+			} else {
+				throw new LogicaException("The campaing [" + codCampana + ":" + campanaNombre + "] is open.");
+			}
+		} catch (DatoException e) {
+			throw new LogicaException(e.getMessage(), e);
+		}
+		return resultado;
+	}
+
+	public List<Phone> getPhones() {
+
+		PhoneDAO phoneDAO = new PhoneDAO(dc_altitude);
+		List<Phone> phones = new ArrayList<Phone>();
+
+		try {
+			phones = phoneDAO.getPhones();
+
+		} catch (DatoException e) {
+			e.printStackTrace();
+		}
+		return phones;
+	}
+
+	public List<CtBean> buscarEasyCodesSinPhone(String campanaNombre, Integer phone) {
+
+		ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dc_altitude);
+		List<CtBean> cts = new ArrayList<CtBean>();
+
+		try {
+			cts = contactPhoneDAO.buscarEasyCodesSinPhone(campanaNombre, phone);
+
+		} catch (DatoException e) {
+			e.printStackTrace();
+		}
+		return cts;
+	}
+
+	public Integer crearContactosDavivienda(String tablaNombre, List<PhContactBean> contactos) throws LogicaException {
+		try {
+			PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+			ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+			CtDaviviendaDAO ctDAO = new CtDaviviendaDAO(dg_altitude);
+
+			assert null != contactos && contactos.size() > 0 : "Lista de contactos incorrecta";
+			int r1 = phContactDAO.insertContactos(contactos);
+			if (contactos.size() != r1) throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + r1 + " de " + contactos.size() + " contactos en Altitude");
+
+			logger.info("[Paso 3/4] Se crearón correctamente " + r1 + " contactos en Altitude");
+			List<CtDaviviendaBean> cts = new ArrayList<CtDaviviendaBean>();
+			List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+			for (PhContactBean contact : contactos) {
+				CtDaviviendaBean ct = (CtDaviviendaBean) contact.getCt();
+				ct.setEasycode(contact.getCode());
+				cts.add(ct);
+				telefonos.add(nuevoContactPhone(contact.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+			}
+			int r2 = ctDAO.insertCtDavivienda(tablaNombre, cts);
+			if (cts.size() != r2) throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + r2 + " de " + cts.size() + " contactos en la CT");
+			logger.info("[Paso 4/5] Se crearón correctamente " + r2 + " contactos en la CT");
+			int resultado = contactPhoneDAO.insertContactPhone(telefonos);
+			if (telefonos.size() != resultado) throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+			logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+			return resultado;
+		} catch (DatoException e) {
+			logger.fatal("Al cargar en Altitude contactos de Davivienda", e);
+			throw new LogicaException("Al cargar en Altitude contactos de Davivienda", e);
+		}
+	}
+
+	public Integer crearContactosClaro01(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4:" + campanaNombre + "] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtClaro01Bean> cts = new ArrayList<CtClaro01Bean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtClaro01Bean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtClaro01DAO ctDAO = new CtClaro01DAO(dg_altitude);
+					resultado = ctDAO.insertCtClaro01(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5:" + campanaNombre + "] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5:" + campanaNombre + "] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5:" + campanaNombre + "] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5:" + campanaNombre + "] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5:" + campanaNombre + "] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	public Integer crearContactosLapolar(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtLapolarBean> cts = new ArrayList<CtLapolarBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtLapolarBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtLapolarDAO ctDAO = new CtLapolarDAO(dg_altitude);
+					resultado = ctDAO.insertCtLapolar(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage(), e.fillInStackTrace());
+		}
+
+		return resultado;
+	}
+
+	public Integer crearContactosClaropyme(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtClaropymeBean> cts = new ArrayList<CtClaropymeBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtClaropymeBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtClaropymeDAO ctDAO = new CtClaropymeDAO(dg_altitude);
+					resultado = ctDAO.insertCtClaropyme(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	public Integer crearContactosClaropjuri(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtClaropjuriBean> cts = new ArrayList<CtClaropjuriBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtClaropjuriBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtClaropjuriDAO ctDAO = new CtClaropjuriDAO(dg_altitude);
+					resultado = ctDAO.insertCtClaropjuri(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	public Integer crearContactosClarocastigo(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtClarocastigoBean> cts = new ArrayList<CtClarocastigoBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtClarocastigoBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtClarocastigoDAO ctDAO = new CtClarocastigoDAO(dg_altitude);
+					resultado = ctDAO.insertCtClarocastigo(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	public Integer crearContactosClaroadm(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtClaroadmBean> cts = new ArrayList<CtClaroadmBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtClaroadmBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtClaroadmDAO ctDAO = new CtClaroadmDAO(dg_altitude);
+					resultado = ctDAO.insertCtClaroadm(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	public Integer crearContactosClaropersu(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtClaropersuBean> cts = new ArrayList<CtClaropersuBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtClaropersuBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtClaropersuDAO ctDAO = new CtClaropersuDAO(dg_altitude);
+					resultado = ctDAO.insertCtClaropersu(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	public Integer crearContactosClaromovil(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtClaromovilBean> cts = new ArrayList<CtClaromovilBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtClaromovilBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtClaromovilDAO ctDAO = new CtClaromovilDAO(dg_altitude);
+					resultado = ctDAO.insertCtClaromovil(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	public Integer crearContactosTelmexVentas(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+			resultado = phContactDAO.insertContactos(contactos);
+
+			if (contactos.size() == resultado) {
+				logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+				List<CtTelmexVentasBean> cts = new ArrayList<CtTelmexVentasBean>();
+				List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+				for (PhContactBean contactot : contactos) {
+					contactot.getCt().setEasycode(contactot.getCode());
+					cts.add((CtTelmexVentasBean) contactot.getCt());
+					telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+				}
+				CtTelmexVentasDAO ctDAO = new CtTelmexVentasDAO(dg_altitude);
+				resultado = ctDAO.insertCtTelmexVentas(campanaNombre, cts);
+				if (cts.size() == resultado) {
+					logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+					ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+					resultado = contactPhoneDAO.insertContactPhone(telefonos);
+					if (telefonos.size() == resultado) {
+						logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+					} else {
+						throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+				}
+			} else {
+				throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	public ContactPhone nuevoContactPhone(Integer easycode, PhoneEnum phone, String telefonocontacto) {
+		ContactPhone telefono = new ContactPhone();
+		telefono.setContact(easycode);
+		telefono.setPhone(phone.getIndex());
+		telefono.setActive((short) 1);
+		telefono.setP_status((short) 0);
+		telefono.setPh_number(telefonocontacto);
+		telefono.setNtries_busy((short) 0);
+		telefono.setNtries_noanswer((short) 0);
+		telefono.setNtries_machine((short) 0);
+		telefono.setNtries_fax((short) 0);
+		telefono.setNtries_modem((short) 0);
+		telefono.setNtries_rejected((short) 0);
+		telefono.setNtries_invalid((short) 0);
+		telefono.setNtries_lineovrflw((short) 0);
+		telefono.setNtries_per_day((short) 0);
+		return telefono;
+	}
+
+	public List<PhContactBean> buscarAgendamientos(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) {
+		PhContactDAO contactDAO = new PhContactDAO(dc_altitude);
+		return contactDAO.buscarAgendamientosTelmexVentas(campanaNombre, desde, hasta, usernamealtitude, valor, tipobusqueda);
+	}
+
+	@SuppressWarnings("deprecation")
+	public Integer ejecutarAsignacion(Integer codCampana, String campanaNombre, List<CtBean> cts, Boolean noVerificarCampanaCerrado) throws LogicaException {
+		Integer deshabilitados = 0;
+		Integer habilitados = 0;
+		try {
+			// Valida si la campaña esta cerrada
+			CampaignLogDAO campainglog = new CampaignLogDAO(dc_altitude);
+			if (noVerificarCampanaCerrado || !campainglog.isCampanaAbierta(codCampana)) {
+				if (cts.size() > 0) {
+					PhContactDAO contactDAO = new PhContactDAO(dg_altitude);
+					deshabilitados = contactDAO.deshabilitaClientesDeCampana(campanaNombre);
+					habilitados = contactDAO.asignarAgentes(cts);
+				}
+			} else {
+				throw new LogicaException("The campaing [" + codCampana + ":" + campanaNombre + "] is open.");
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException("Al ejecutar la asignación", e);
+		}
+		logger.info("CT:" + campanaNombre + ", deshabilitados:" + deshabilitados + ", habilitados:" + habilitados);
+
+		return habilitados;
+	}
+
+	public Integer habilitarClientes(List<CtBean> cts, Boolean actualizarAgent, Boolean actualizarMomment, Boolean actualizarDialRule, Boolean actualizarPriority) throws LogicaException {
+		Integer habilitados = 0;
+		try {
+			PhContactDAO contactDAO = new PhContactDAO(dg_altitude);
+			habilitados = contactDAO.habilitarClientes(cts, actualizarAgent, actualizarMomment, actualizarDialRule, actualizarPriority);
+		} catch (DatoException e) {
+			throw new LogicaException(e.getMessage(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new LogicaException(e.getMessage(), e.fillInStackTrace());
+		}
+		return habilitados;
+	}
+
+	public Boolean isCampanaAbierta(Integer codCampana) throws LogicaException {
+		Boolean respuesta = false;
+
+		try {
+			// Valida si la campaña esta cerrada
+			CampaignLogDAO campainglog = new CampaignLogDAO(dc_altitude);
+			respuesta = campainglog.isCampanaAbierta(codCampana);
+
+		} catch (DatoException e) {
+			throw new LogicaException(e.getMessage());
+		}
+		return respuesta;
+	}
+
+	public List<CtBean> prepararDeshabilitacion(Integer codCampana, String campanaNombre, Boolean noDesactivarContactos, Boolean noVerificarCampanaCerrado) throws LogicaException {
+		List<CtBean> cts = new ArrayList<CtBean>();
+
+		try {
+			// Valida si la campaña esta cerrada
+			CampaignLogDAO campainglog = new CampaignLogDAO(dc_altitude);
+			if (noVerificarCampanaCerrado || !campainglog.isCampanaAbierta(codCampana)) {
+
+				if (cts.size() >= 0) {
+					PhContactDAO contactDAO = new PhContactDAO(dg_altitude);
+					if (!noDesactivarContactos) {
+						cts = contactDAO.getEasyCodesNotDoneByCt(campanaNombre);
+					}
+				}
+
+			} else {
+				throw new LogicaException("The campaing [" + codCampana + ":" + campanaNombre + "] is open.");
+			}
+		} catch (DatoException e) {
+			throw new LogicaException(e.getMessage());
+		}
+		return cts;
+	}
+
+	@Deprecated
+	public Integer deshabilitarClientes(Integer codCampana, String campanaNombre, List<CtBean> cts, Boolean noDesactivarContactos, Boolean noVerificarCampanaCerrado) throws LogicaException {
+		Integer deshabilitados = 0;
+
+		try {
+			// Valida si la campaña esta cerrada
+			CampaignLogDAO campainglog = new CampaignLogDAO(dc_altitude);
+			if (noVerificarCampanaCerrado || !campainglog.isCampanaAbierta(codCampana)) {
+
+				if (cts.size() >= 0) {
+					PhContactDAO contactDAO = new PhContactDAO(dg_altitude);
+					if (!noDesactivarContactos) {
+						deshabilitados = contactDAO.deshabilitaClientesDeCampana(campanaNombre);
+					}
+				}
+
+			} else {
+				throw new LogicaException("The campaing [" + codCampana + ":" + campanaNombre + "] is open.");
+			}
+		} catch (DatoException e) {
+			throw new LogicaException(e.getMessage());
+		} catch (Exception e) {
+			logger.error(" Excepcion no manejada : ", e);
+			throw new LogicaException(e.toString());
+		}
+		return deshabilitados;
+	}
+
+	public List<CtBean> preparaPriorizacion(List<CtBean> cts, Boolean actualizarAgent, Boolean actualizarMomment, Boolean actualizarDialRule, Boolean actualizarPriority) throws LogicaException {
+
+		try {
+			PhContactBean contact = null;
+
+			Short prioritymin = 15;
+			Short prioritymax = 100;
+
+			Short priority = prioritymax;
+			int rango = 1;
+			if (cts.size() <= 100) {
+				rango = 1;
+				logger.info("Entra menos o igual a 100");
+			} else {
+				rango = (int) cts.size() / (prioritymax - prioritymin);
+				logger.info("Entra mayor a 100 "+rango);
+			}
+			int count = 1;
+			for (CtBean ct : cts) {
+				contact = new PhContactBean();
+				if (actualizarAgent) {
+
+					if (null != ct.getContact()) {
+						contact.setAgent(ct.getContact().getAgent());
+					}
+				}
+				if (actualizarMomment) {
+					contact.setMoment(null);
+				}
+				if (actualizarDialRule) {
+					contact.setDial_rule(null);
+				}
+				if (actualizarPriority) {
+					if (count == rango) {
+						priority--;
+						count = 1;
+					} else {
+						count++;
+					}
+					contact.setPriority(priority);
+				}
+
+				ct.setContact(contact);
+			}
+
+		} catch (Exception e) {
+			logger.error(" Excepcion no manejada : ", e);
+			throw new LogicaException(e.toString());
+		}
+
+		return cts;
+	}
+
+	/**
+	 * Metodo para consultar listados de CtBean's con los easycode
+	 * 
+	 * @param ticketDetalle
+	 * @return
+	 */
+	public List<CtBean> consultarEasycodeAltitude(String nombreCt, String variableBusqueda, String valoresBusqueda) {
+		PhContactDAO contactDAO = new PhContactDAO(dg_altitude);
+		return contactDAO.consultarEasycodeAltitude(nombreCt, variableBusqueda, valoresBusqueda);
+	}
+
+	/**
+	 * Metodo para generar llamada automatica en altitude
+	 * 
+	 * @param ticketDetalle
+	 * @return
+	 */
+	public Integer agendarLlamadaClienteALtitude(Integer ticketDetalle, String nombrect, String agente) {
+		PhContactDAO contactDAO = new PhContactDAO(dg_altitude);
+		return contactDAO.agendarLlamadaClienteALtitude(ticketDetalle, nombrect, agente);
+	}
+
+	/**
+	 * Metodo que permite deshabilita Clientes Por Easycodes
+	 * 
+	 * @param listado
+	 *            Contactos (CtBean)
+	 * @return
+	 */
+	public Integer deshabilitaClientesPorEasycodes(List<CtBean> cts) throws LogicaException {
+		try {
+			PhContactDAO contactDAO = new PhContactDAO(dg_altitude);
+			return contactDAO.deshabilitaClientesPorEasycodes(cts);
+		} catch (DatoException e) {
+			throw new LogicaException(e.getMessage(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new LogicaException(e.getMessage(), e.fillInStackTrace());
+		}
+	}
+
+	/**
+	 * Crea los contactos nuevos en la tabla ct_coomeva
+	 * 
+	 * @param campanaNombre
+	 * @param contactos
+	 * @return
+	 * @throws LogicaException
+	 */
+	public Integer crearContactosCoomeva(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtCoomevaBean> cts = new ArrayList<CtCoomevaBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtCoomevaBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtCoomevaDAO ctDAO = new CtCoomevaDAO(dg_altitude);
+					resultado = ctDAO.insertCtCoomeva(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	/**
+	 * Genera la priorizacion de coomeva en el sistema altitude
+	 * 
+	 * @param codCampana
+	 * @param campanaNombre
+	 * @param cts
+	 * @param noDesactivarContactos
+	 * @param noVerificarCampanaCerrado
+	 * @param actualizarAgent
+	 * @param actualizarMomment
+	 * @param actualizarDialRule
+	 * @param actualizarPriority
+	 * @return
+	 * @throws LogicaException
+	 */
+	@SuppressWarnings("deprecation")
+	public Integer ejecutarPriorizacionCoomeva(Integer codCampana, String campanaNombre, List<CtBean> cts, Boolean noDesactivarContactos, Boolean noVerificarCampanaCerrado, Boolean actualizarAgent,
+			Boolean actualizarMomment, Boolean actualizarDialRule, Boolean actualizarPriority) throws LogicaException {
+		Integer deshabilitados = 0;
+		Integer habilitados = 0;
+		try {
+			// Valida si la campaña esta cerrada
+			CampaignLogDAO campainglog = new CampaignLogDAO(dc_altitude);
+			if (noVerificarCampanaCerrado || !campainglog.isCampanaAbierta(codCampana)) {
+
+				PhContactBean contact = null;
+
+				Short prioritymin = 15;
+				Short prioritymax = 100;
+
+				Short priority = prioritymax;
+				int rango = 1;
+				if (cts.size() <= 100) {
+					rango = 1;
+				} else {
+					rango = (int) cts.size() / (prioritymax - prioritymin);
+				}
+				int count = 1;
+				for (CtBean ct : cts) {
+
+					contact = new PhContactBean();
+					if (actualizarAgent) {
+						contact.setAgent(null);
+					}
+					if (actualizarMomment) {
+						contact.setMoment(null);
+					}
+					if (actualizarDialRule) {
+						contact.setDial_rule(null);
+					}
+					if (actualizarPriority) {
+						if (count == rango) {
+							priority--;
+							count = 1;
+						} else {
+							count++;
+						}
+						contact.setPriority(priority);
+					}
+
+					ct.setContact(contact);
+				}
+
+				if (cts.size() >= 0) {
+					PhContactDAO contactDAO = new PhContactDAO(dg_altitude);
+					if (!noDesactivarContactos) {
+						deshabilitados = contactDAO.deshabilitaClientesDeCampana(campanaNombre);
+					}
+					habilitados = contactDAO.habilitarClientes(cts, actualizarAgent, actualizarMomment, actualizarDialRule, actualizarPriority);
+				}
+
+			} else {
+				throw new LogicaException("The campaing is open.");
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+		logger.info("CT:" + campanaNombre + ", deshabilitados:" + deshabilitados + ", habilitados:" + habilitados);
+
+		return habilitados;
+	}
+
+	/**
+	 * Crea los contactos nuevos en la tabla ct_bancoagrario
+	 * 
+	 * @param campanaNombre
+	 * @param contactos
+	 * @return
+	 * @throws LogicaException
+	 */
+	public Integer crearContactosBancoagrario(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtBancoagrarioBean> cts = new ArrayList<CtBancoagrarioBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtBancoagrarioBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+
+					CtBancoagrarioDAO ctDAO = new CtBancoagrarioDAO(dg_altitude);
+					resultado = ctDAO.insertCtBancoagrario(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info("Error en crearContactosBancoagrario: ", e);
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	/**
+	 * Crea los contactos nuevos en la tabla ct_etbadmin o ct_etbfront
+	 * 
+	 * @param campanaNombre
+	 * @param contactos
+	 * @return
+	 * @throws LogicaException
+	 */
+	public Integer crearContactosEtb(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/5] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtEtbBean> cts = new ArrayList<CtEtbBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtEtbBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+
+					CtEtbDAO ctDAO = new CtEtbDAO(dg_altitude);
+					resultado = ctDAO.insertCtEtb(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			} else {
+				logger.info("[Paso 3/5] [Paso 4/5] [Paso 5/5] No se crea ningun contacto porque ya existen.");
+			}
+		} catch (DatoException e) {
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	/**
+	 * Genera la priorizacion de etb en el sistema altitude
+	 * 
+	 * @param codCampana
+	 * @param campanaNombre
+	 * @param cts
+	 * @param noDesactivarContactos
+	 * @param noVerificarCampanaCerrado
+	 * @param actualizarAgent
+	 * @param actualizarMomment
+	 * @param actualizarDialRule
+	 * @param actualizarPriority
+	 * @return
+	 * @throws LogicaException
+	 */
+	@SuppressWarnings("deprecation")
+	public Integer ejecutarPriorizacionEtb(Integer codCampana, String campanaNombre, List<CtBean> cts, Boolean noDesactivarContactos, Boolean noVerificarCampanaCerrado, Boolean actualizarAgent,
+			Boolean actualizarMomment, Boolean actualizarDialRule, Boolean actualizarPriority) throws LogicaException {
+		Integer deshabilitados = 0;
+		Integer habilitados = 0;
+		try {
+			// Valida si la campaña esta cerrada
+			CampaignLogDAO campainglog = new CampaignLogDAO(dc_altitude);
+			if (noVerificarCampanaCerrado || !campainglog.isCampanaAbierta(codCampana)) {
+
+				PhContactBean contact = null;
+
+				Short prioritymin = 15;
+				Short prioritymax = 100;
+
+				Short priority = prioritymax;
+				int rango = 1;
+				if (cts.size() <= 100) {
+					rango = 1;
+				} else {
+					rango = (int) cts.size() / (prioritymax - prioritymin);
+				}
+				int count = 1;
+				for (CtBean ct : cts) {
+
+					contact = new PhContactBean();
+					if (actualizarAgent) {
+						contact.setAgent(null);
+					}
+					if (actualizarMomment) {
+						contact.setMoment(null);
+					}
+					if (actualizarDialRule) {
+						contact.setDial_rule(null);
+					}
+					if (actualizarPriority) {
+						if (count == rango) {
+							priority--;
+							count = 1;
+						} else {
+							count++;
+						}
+						contact.setPriority(priority);
+					}
+
+					ct.setContact(contact);
+				}
+
+				if (cts.size() >= 0) {
+					PhContactDAO contactDAO = new PhContactDAO(dg_altitude);
+					if (!noDesactivarContactos) {
+						deshabilitados = contactDAO.deshabilitaClientesDeCampana(campanaNombre);
+					}
+					habilitados = contactDAO.habilitarClientes(cts, actualizarAgent, actualizarMomment, actualizarDialRule, actualizarPriority);
+				}
+
+			} else {
+				throw new LogicaException("The campaing is open.");
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+		logger.info("CT:" + campanaNombre + ", deshabilitados:" + deshabilitados + ", habilitados:" + habilitados);
+
+		return habilitados;
+	}
+
+	/**
+	 * Crea los contactos nuevos en la tabla ct_etbadmin o ct_etbfront
+	 * 
+	 * @param campanaNombre
+	 * @param contactos
+	 * @return
+	 * @throws LogicaException
+	 */
+	public Integer crearContactosElEspectadorVentas(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/5] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtElEspectadorVentasBean> cts = new ArrayList<CtElEspectadorVentasBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtElEspectadorVentasBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+
+					CtElEspectadorVentasDAO ctDAO = new CtElEspectadorVentasDAO(dg_altitude);
+					resultado = ctDAO.insertCtElEspectadorVentas(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			} else {
+				logger.info("[Paso 3/5] [Paso 4/5] [Paso 5/5] No se crea ningun contacto porque ya existen.");
+			}
+		} catch (DatoException e) {
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	/**
+	 * Genera la priorizacion de el espectador ventas en el sistema altitude
+	 * 
+	 * @param codCampana
+	 * @param campanaNombre
+	 * @param cts
+	 * @param noDesactivarContactos
+	 * @param noVerificarCampanaCerrado
+	 * @param actualizarAgent
+	 * @param actualizarMomment
+	 * @param actualizarDialRule
+	 * @param actualizarPriority
+	 * @return
+	 * @throws LogicaException
+	 */
+	@SuppressWarnings("deprecation")
+	public Integer ejecutarPriorizacionElEspectadorVentas(Integer codCampana, String campanaNombre, List<CtBean> cts, Boolean noDesactivarContactos, Boolean noVerificarCampanaCerrado,
+			Boolean actualizarAgent, Boolean actualizarMomment, Boolean actualizarDialRule, Boolean actualizarPriority) throws LogicaException {
+		Integer deshabilitados = 0;
+		Integer habilitados = 0;
+		try {
+			// Valida si la campaña esta cerrada
+			CampaignLogDAO campainglog = new CampaignLogDAO(dc_altitude);
+			if (noVerificarCampanaCerrado || !campainglog.isCampanaAbierta(codCampana)) {
+
+				PhContactBean contact = null;
+
+				Short prioritymin = 15;
+				Short prioritymax = 100;
+
+				Short priority = prioritymax;
+				int rango = 1;
+				if (cts.size() <= 100) {
+					rango = 1;
+				} else {
+					rango = (int) cts.size() / (prioritymax - prioritymin);
+				}
+				int count = 1;
+				for (CtBean ct : cts) {
+
+					contact = new PhContactBean();
+					if (actualizarAgent) {
+						contact.setAgent(null);
+					}
+					if (actualizarMomment) {
+						contact.setMoment(null);
+					}
+					if (actualizarDialRule) {
+						contact.setDial_rule(null);
+					}
+					if (actualizarPriority) {
+						if (count == rango) {
+							priority--;
+							count = 1;
+						} else {
+							count++;
+						}
+						contact.setPriority(priority);
+					}
+
+					ct.setContact(contact);
+				}
+
+				if (cts.size() >= 0) {
+					PhContactDAO contactDAO = new PhContactDAO(dg_altitude);
+					if (!noDesactivarContactos) {
+						deshabilitados = contactDAO.deshabilitaClientesDeCampana(campanaNombre);
+					}
+					habilitados = contactDAO.habilitarClientes(cts, actualizarAgent, actualizarMomment, actualizarDialRule, actualizarPriority);
+				}
+
+			} else {
+				throw new LogicaException("The campaing is open.");
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+		logger.info("CT:" + campanaNombre + ", deshabilitados:" + deshabilitados + ", habilitados:" + habilitados);
+
+		return habilitados;
+	}
+
+	/**
+	 * Crea los contactos nuevos en la tabla ct_mov_sisbares o ct_mov_sistrpb2 o ct_mov_sistrpb3 o ct_mov_sistetr2
+	 * 
+	 * @param campanaNombre
+	 * @param contactos
+	 * @return
+	 * @throws LogicaException
+	 */
+	public Integer crearContactosMovistar(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/5] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtMovistarBean> cts = new ArrayList<CtMovistarBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtMovistarBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+
+					CtMovistarDAO ctDAO = new CtMovistarDAO(dg_altitude);
+					resultado = ctDAO.insertCtMovistar(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			} else {
+				logger.info("[Paso 3/5] [Paso 4/5] [Paso 5/5] No se crea ningun contacto porque ya existen.");
+			}
+		} catch (DatoException e) {
+			logger.error("Excepción atrapada en crearContactosMovistar: ", e);
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	/**
+	 * Genera la priorizacion de etb en el sistema altitude
+	 * 
+	 * @param codCampana
+	 * @param campanaNombre
+	 * @param cts
+	 * @param noDesactivarContactos
+	 * @param noVerificarCampanaCerrado
+	 * @param actualizarAgent
+	 * @param actualizarMomment
+	 * @param actualizarDialRule
+	 * @param actualizarPriority
+	 * @return
+	 * @throws LogicaException
+	 */
+	@SuppressWarnings("deprecation")
+	public Integer ejecutarPriorizacionMovistar(Integer codCampana, String campanaNombre, List<CtBean> cts, Boolean noDesactivarContactos, Boolean noVerificarCampanaCerrado, Boolean actualizarAgent,
+			Boolean actualizarMomment, Boolean actualizarDialRule, Boolean actualizarPriority) throws LogicaException {
+		Integer deshabilitados = 0;
+		Integer habilitados = 0;
+		try {
+			// Valida si la campaña esta cerrada
+			CampaignLogDAO campainglog = new CampaignLogDAO(dc_altitude);
+			if (noVerificarCampanaCerrado || !campainglog.isCampanaAbierta(codCampana)) {
+
+				PhContactBean contact = null;
+
+				Short prioritymin = 15;
+				Short prioritymax = 100;
+
+				Short priority = prioritymax;
+				int rango = 1;
+				if (cts.size() <= 100) {
+					rango = 1;
+				} else {
+					rango = (int) cts.size() / (prioritymax - prioritymin);
+				}
+				int count = 1;
+				for (CtBean ct : cts) {
+
+					contact = new PhContactBean();
+					if (actualizarAgent) {
+						contact.setAgent(null);
+					}
+					if (actualizarMomment) {
+						contact.setMoment(null);
+					}
+					if (actualizarDialRule) {
+						contact.setDial_rule(null);
+					}
+					if (actualizarPriority) {
+						if (count == rango) {
+							priority--;
+							count = 1;
+						} else {
+							count++;
+						}
+						contact.setPriority(priority);
+					}
+
+					ct.setContact(contact);
+				}
+
+				if (cts.size() >= 0) {
+					PhContactDAO contactDAO = new PhContactDAO(dg_altitude);
+					if (!noDesactivarContactos) {
+						deshabilitados = contactDAO.deshabilitaClientesDeCampana(campanaNombre);
+					}
+					habilitados = contactDAO.habilitarClientes(cts, actualizarAgent, actualizarMomment, actualizarDialRule, actualizarPriority);
+				}
+
+				logger.info("CT:" + campanaNombre + ", deshabilitados:" + deshabilitados + ", habilitados:" + habilitados);
+
+			} else {
+				throw new LogicaException("La campaña " + campanaNombre + " esta abierta.");
+			}
+
+		} catch (DatoException e) {
+			logger.error("Excepción atrapada en ejecutarPriorizacionMovistar: ", e);
+			throw new LogicaException(e.getMessage());
+		}
+
+		return habilitados;
+	}
+
+	/**
+	 * Crea los contactos nuevos en la tabla ct_natura
+	 * 
+	 * @param campanaNombre
+	 * @param contactos
+	 * @return
+	 * @throws LogicaException
+	 */
+	public Integer crearContactosNatura(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/5] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtNaturaBean> cts = new ArrayList<CtNaturaBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtNaturaBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+
+					CtNaturaDAO ctDAO = new CtNaturaDAO(dg_altitude);
+					resultado = ctDAO.insertCtNatura(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			} else {
+				logger.info("[Paso 3/5] [Paso 4/5] [Paso 5/5] No se crea ningun contacto porque ya existen.");
+			}
+		} catch (DatoException e) {
+			logger.error("Excepción atrapada en crearContactosMovistar: ", e);
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	public Integer crearContactosAmazonaspreventiva(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		logger.debug("crearContactosAmazonaspreventiva()");
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtAmapreveBean> cts = new ArrayList<CtAmapreveBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtAmapreveBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtAmapreveDAO ctDAO = new CtAmapreveDAO(dg_altitude);
+					resultado = ctDAO.insertCtAmaprevecarte(campanaNombre, cts);
+
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	/**
+	 * Genera la priorizacion de Natura en el sistema altitude
+	 * 
+	 * @param codCampana
+	 * @param campanaNombre
+	 * @param cts
+	 * @param noDesactivarContactos
+	 * @param noVerificarCampanaCerrado
+	 * @param actualizarAgent
+	 * @param actualizarMomment
+	 * @param actualizarDialRule
+	 * @param actualizarPriority
+	 * @return
+	 * @throws LogicaException
+	 */
+	@SuppressWarnings("deprecation")
+	public Integer ejecutarPriorizacionNatura(Integer codCampana, String campanaNombre, List<CtBean> cts, Boolean noDesactivarContactos, Boolean noVerificarCampanaCerrado, Boolean actualizarAgent,
+			Boolean actualizarMomment, Boolean actualizarDialRule, Boolean actualizarPriority) throws LogicaException {
+		Integer deshabilitados = 0;
+		Integer habilitados = 0;
+		try {
+			// Valida si la campaña esta cerrada
+			CampaignLogDAO campainglog = new CampaignLogDAO(dc_altitude);
+			if (noVerificarCampanaCerrado || !campainglog.isCampanaAbierta(codCampana)) {
+
+				PhContactBean contact = null;
+
+				Short prioritymin = 15;
+				Short prioritymax = 100;
+
+				Short priority = prioritymax;
+				int rango = 1;
+				if (cts.size() <= 100) {
+					rango = 1;
+				} else {
+					rango = (int) cts.size() / (prioritymax - prioritymin);
+				}
+				int count = 1;
+				for (CtBean ct : cts) {
+
+					contact = new PhContactBean();
+					if (actualizarAgent) {
+						contact.setAgent(null);
+					}
+					if (actualizarMomment) {
+						contact.setMoment(null);
+					}
+					if (actualizarDialRule) {
+						contact.setDial_rule(null);
+					}
+					if (actualizarPriority) {
+						if (count == rango) {
+							priority--;
+							count = 1;
+						} else {
+							count++;
+						}
+						contact.setPriority(priority);
+					}
+
+					ct.setContact(contact);
+				}
+
+				if (cts.size() >= 0) {
+					PhContactDAO contactDAO = new PhContactDAO(dg_altitude);
+					if (!noDesactivarContactos) {
+						deshabilitados = contactDAO.deshabilitaClientesDeCampana(campanaNombre);
+					}
+					habilitados = contactDAO.habilitarClientes(cts, actualizarAgent, actualizarMomment, actualizarDialRule, actualizarPriority);
+				}
+
+				logger.info("CT:" + campanaNombre + ", deshabilitados:" + deshabilitados + ", habilitados:" + habilitados);
+
+			} else {
+				throw new LogicaException("La campaña " + campanaNombre + " esta abierta.");
+			}
+
+		} catch (DatoException e) {
+			logger.error("Excepción atrapada en ejecutarPriorizacionMovistar: ", e);
+			throw new LogicaException(e.getMessage());
+		}
+
+		return habilitados;
+	}
+
+	public Integer crearContactosColsubsidio(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtColsubsidioBean> cts = new ArrayList<CtColsubsidioBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtColsubsidioBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtColsubsidioDAO ctDAO = new CtColsubsidioDAO(dg_altitude);
+					resultado = ctDAO.insertCtColsubsidio(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	/**
+	 * Genera la priorizacion de etb en el sistema altitude
+	 * 
+	 * @param codCampana
+	 * @param campanaNombre
+	 * @param cts
+	 * @param noDesactivarContactos
+	 * @param noVerificarCampanaCerrado
+	 * @param actualizarAgent
+	 * @param actualizarMomment
+	 * @param actualizarDialRule
+	 * @param actualizarPriority
+	 * @return
+	 * @throws LogicaException
+	 */
+	@SuppressWarnings("deprecation")
+	public Integer ejecutarPriorizacionColsubsidio(Integer codCampana, String campanaNombre, List<CtBean> cts, Boolean noDesactivarContactos, Boolean noVerificarCampanaCerrado,
+			Boolean actualizarAgent, Boolean actualizarMomment, Boolean actualizarDialRule, Boolean actualizarPriority) throws LogicaException {
+		Integer deshabilitados = 0;
+		Integer habilitados = 0;
+		try {
+			// Valida si la campaña esta cerrada
+			CampaignLogDAO campainglog = new CampaignLogDAO(dc_altitude);
+			if (noVerificarCampanaCerrado || !campainglog.isCampanaAbierta(codCampana)) {
+
+				PhContactBean contact = null;
+
+				Short prioritymin = 15;
+				Short prioritymax = 100;
+
+				Short priority = prioritymax;
+				int rango = 1;
+				if (cts.size() <= 100) {
+					rango = 1;
+				} else {
+					rango = (int) cts.size() / (prioritymax - prioritymin);
+				}
+				int count = 1;
+				for (CtBean ct : cts) {
+
+					contact = new PhContactBean();
+					if (actualizarAgent) {
+						contact.setAgent(null);
+					}
+					if (actualizarMomment) {
+						contact.setMoment(null);
+					}
+					if (actualizarDialRule) {
+						contact.setDial_rule(null);
+					}
+					if (actualizarPriority) {
+						if (count == rango) {
+							priority--;
+							count = 1;
+						} else {
+							count++;
+						}
+						contact.setPriority(priority);
+					}
+
+					ct.setContact(contact);
+				}
+
+				if (cts.size() >= 0) {
+					PhContactDAO contactDAO = new PhContactDAO(dg_altitude);
+					if (!noDesactivarContactos) {
+						deshabilitados = contactDAO.deshabilitaClientesDeCampana(campanaNombre);
+					}
+					habilitados = contactDAO.habilitarClientes(cts, actualizarAgent, actualizarMomment, actualizarDialRule, actualizarPriority);
+				}
+
+				logger.info("CT:" + campanaNombre + ", deshabilitados:" + deshabilitados + ", habilitados:" + habilitados);
+
+			} else {
+				throw new LogicaException("La campaña " + campanaNombre + " esta abierta.");
+			}
+
+		} catch (DatoException e) {
+			logger.error("Excepción atrapada en ejecutarPriorizacionMovistar: ", e);
+			throw new LogicaException(e.getMessage());
+		}
+
+		return habilitados;
+	}
+
+	
+	public Integer crearContactosColsubsidioad(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtColsubsidioadBean> cts = new ArrayList<CtColsubsidioadBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtColsubsidioadBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtColsubsidioadDAO ctDAO = new CtColsubsidioadDAO(dg_altitude);
+					resultado = ctDAO.insertCtColsubsidio(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+	
+	
+	public Integer crearContactosColsubsidionotificacion(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtColsubsidionotificacionBean> cts = new ArrayList<CtColsubsidionotificacionBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtColsubsidionotificacionBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtColsubsidionotificacionDAO ctDAO = new CtColsubsidionotificacionDAO(dg_altitude);
+					resultado = ctDAO.insertCtColsubsidio(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+	
+	/**
+	 * Genera la priorizacion de Amazonas Cobranza en el sistema altitude
+	 * 
+	 * @param codCampana
+	 * @param campanaNombre
+	 * @param cts
+	 * @param noDesactivarContactos
+	 * @param noVerificarCampanaCerrado
+	 * @param actualizarAgent
+	 * @param actualizarMomment
+	 * @param actualizarDialRule
+	 * @param actualizarPriority
+	 * @return
+	 * @throws LogicaException
+	 */
+	@SuppressWarnings("deprecation")
+	public Integer ejecutarPriorizacionAmazonasCobranza(Integer codCampana, String campanaNombre, List<CtBean> cts, Boolean noDesactivarContactos, Boolean noVerificarCampanaCerrado,
+			Boolean actualizarAgent, Boolean actualizarMomment, Boolean actualizarDialRule, Boolean actualizarPriority) throws LogicaException {
+		Integer deshabilitados = 0;
+		Integer habilitados = 0;
+		try {
+			// Valida si la campaña esta cerrada
+			CampaignLogDAO campainglog = new CampaignLogDAO(dc_altitude);
+			if (noVerificarCampanaCerrado || !campainglog.isCampanaAbierta(codCampana)) {
+
+				PhContactBean contact = null;
+
+				Short prioritymin = 15;
+				Short prioritymax = 100;
+
+				Short priority = prioritymax;
+				int rango = 1;
+				if (cts.size() <= 100) {
+					rango = 1;
+				} else {
+					rango = (int) cts.size() / (prioritymax - prioritymin);
+				}
+				int count = 1;
+				for (CtBean ct : cts) {
+
+					contact = new PhContactBean();
+					if (actualizarAgent) {
+						contact.setAgent(null);
+					}
+					if (actualizarMomment) {
+						contact.setMoment(null);
+					}
+					if (actualizarDialRule) {
+						contact.setDial_rule(null);
+					}
+					if (actualizarPriority) {
+						if (count == rango) {
+							priority--;
+							count = 1;
+						} else {
+							count++;
+						}
+						contact.setPriority(priority);
+					}
+
+					ct.setContact(contact);
+				}
+
+				if (cts.size() >= 0) {
+					PhContactDAO contactDAO = new PhContactDAO(dg_altitude);
+					if (!noDesactivarContactos) {
+						deshabilitados = contactDAO.deshabilitaClientesDeCampana(campanaNombre);
+					}
+					habilitados = contactDAO.habilitarClientes(cts, actualizarAgent, actualizarMomment, actualizarDialRule, actualizarPriority);
+				}
+
+				logger.info("CT:" + campanaNombre + ", deshabilitados:" + deshabilitados + ", habilitados:" + habilitados);
+
+			} else {
+				throw new LogicaException("La campaña " + campanaNombre + " esta abierta.");
+			}
+
+		} catch (DatoException e) {
+			logger.error("Excepción atrapada en ejecutarPriorizacionMovistar: ", e);
+			throw new LogicaException(e.getMessage());
+		}
+
+		return habilitados;
+	}
+
+	/**
+	 * Crea los contactos nuevos en la tabla ct_davip_registro
+	 * 
+	 * @param campanaNombre
+	 * @param contactos
+	 * @return
+	 * @throws LogicaException
+	 */
+	public Integer crearContactosTicketRegistro(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		CtTicketRegistroBean ctTicketRegistroBean = null;
+
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/5] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtTicketRegistroBean> cts = new ArrayList<CtTicketRegistroBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+
+						ctTicketRegistroBean = (CtTicketRegistroBean) contactot.getCt();
+						cts.add(ctTicketRegistroBean);
+
+						if (ctTicketRegistroBean.getTelefono() != null) {
+							telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, ctTicketRegistroBean.getTelefono()));
+						} else {
+							telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+
+						}
+
+						if (ctTicketRegistroBean.getDaviplata() != null) {
+
+							telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono2, ctTicketRegistroBean.getDaviplata()));
+						} else {
+							telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono2, TELEFONO_DEFAULT));
+
+						}
+
+					}
+
+					CtTicketRegistroDAO ctDAO = new CtTicketRegistroDAO(dg_altitude);
+					resultado = ctDAO.insertCtTicketRegistro(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			} else {
+				logger.info("[Paso 3/5] [Paso 4/5] [Paso 5/5] No se crea ningun contacto porque ya existen.");
+			}
+		} catch (DatoException e) {
+			logger.error("Excepción atrapada en crearContactosTicketRegistro: ", e);
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	public Integer crearContactosEtbventa(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtEtbventaBean> cts = new ArrayList<CtEtbventaBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtEtbventaBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtEtbventaDAO ctDAO = new CtEtbventaDAO(dg_altitude);
+					resultado = ctDAO.insertCtEtbventa(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	public Integer crearContactosMovistarmovil(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtMovistarmovilBean> cts = new ArrayList<CtMovistarmovilBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtMovistarmovilBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtMovistarmovilDAO ctDAO = new CtMovistarmovilDAO(dg_altitude);
+					resultado = ctDAO.insertCtMovistarmovil(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+
+	public Integer crearContactosBelcorp(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtBelcorpBean> cts = new ArrayList<CtBelcorpBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtBelcorpBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtBelcorpDAO ctDAO = new CtBelcorpDAO(dg_altitude);
+					resultado = ctDAO.insertCtBelcorp(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+	
+	public Integer crearContactosCorona(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtCoronaBean> cts = new ArrayList<CtCoronaBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtCoronaBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtCoronaDAO ctDAO = new CtCoronaDAO(dg_altitude);
+					resultado = ctDAO.insertCtCorona(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+	
+	public Integer crearContactosColsubsidiocyd(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtColsubsidiocydBean> cts = new ArrayList<CtColsubsidiocydBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtColsubsidiocydBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtColsubsidiocydDAO ctDAO = new CtColsubsidiocydDAO(dg_altitude);
+					resultado = ctDAO.insertCtColsubsidiocyd(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+	
+	/**
+	 * 
+	 * @param campanaNombre
+	 * @param contactos
+	 * @return
+	 * @throws LogicaException
+	 */
+	public Integer crearContactosTigo(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4:" + campanaNombre + "] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtTigoBean> cts = new ArrayList<CtTigoBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtTigoBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtTigoDAO ctDAO = new CtTigoDAO(dg_altitude);
+					resultado = ctDAO.insertCtTigo(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5:" + campanaNombre + "] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5:" + campanaNombre + "] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5:" + campanaNombre + "] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5:" + campanaNombre + "] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5:" + campanaNombre + "] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+	
+	
+	public Integer crearContactosCarteraespecial(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4:" + campanaNombre + "] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtCarteraEspecialBean> cts = new ArrayList<CtCarteraEspecialBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtCarteraEspecialBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					CtCarteraEspecialDAO ctDAO = new CtCarteraEspecialDAO(dg_altitude);
+					resultado = ctDAO.insertCtCarteraEspecial(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5:" + campanaNombre + "] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5:" + campanaNombre + "] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5:" + campanaNombre + "] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5:" + campanaNombre + "] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5:" + campanaNombre + "] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info(e.getMessage());
+			logger.info(e.toString());
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+	
+	
+	/**
+	 * Crea los contactos nuevos en la tabla ct_bancoagrario
+	 * 
+	 * @param campanaNombre
+	 * @param contactos
+	 * @return
+	 * @throws LogicaException
+	 */
+	public Integer crearContactosSegurosbolivar(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtSegurosbolivarBean> cts = new ArrayList<CtSegurosbolivarBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtSegurosbolivarBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+
+					CtSegurosbolivarDAO ctDAO = new CtSegurosbolivarDAO(dg_altitude);
+					resultado = ctDAO.insertCtSegurosbolivar(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info("Error en crearContactosBancoagrario: ", e);
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+	
+	
+	/**
+	 * Crea los contactos nuevos en la tabla ct_bancoagrario
+	 * 
+	 * @param campanaNombre
+	 * @param contactos
+	 * @return
+	 * @throws LogicaException
+	 */
+	public Integer crearContactosPublicar(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtPublicarBean> cts = new ArrayList<CtPublicarBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtPublicarBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+
+					CtPublicarDAO ctDAO = new CtPublicarDAO(dg_altitude);
+					resultado = ctDAO.insertCtPublicar(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info("Error en crearContactosBancoagrario: ", e);
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+	
+	/**
+	 * Crea los contactos nuevos en la tabla ct_publicarventas
+	 * 
+	 * @param campanaNombre
+	 * @param contactos
+	 * @return
+	 * @throws LogicaException
+	 */
+	public Integer crearContactosPublicarVentas(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtPublicarVentasBean> cts = new ArrayList<CtPublicarVentasBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					
+					for (PhContactBean contactot : contactos) {
+
+						contactot.getCt().setEasycode(contactot.getCode());
+
+						cts.add((CtPublicarVentasBean) contactot.getCt());
+
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					
+					CtPublicarVentasDAO ctDAO = new CtPublicarVentasDAO(dg_altitude);
+					resultado = ctDAO.insertCtPublicarVentas(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info("Error en crearContactosBancoagrario: ", e);
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+	
+	/**
+	 * Crea los contactos nuevos en la tabla ct_bancooccidentev
+	 * 
+	 * @param campanaNombre
+	 * @param contactos
+	 * @return
+	 * @throws LogicaException
+	 */
+	public Integer crearContactosBancoOccidenteVentas(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtBancoOccidenteVentasBean> cts = new ArrayList<CtBancoOccidenteVentasBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					
+					for (PhContactBean contactot : contactos) {
+
+						contactot.getCt().setEasycode(contactot.getCode());
+
+						cts.add((CtBancoOccidenteVentasBean) contactot.getCt());
+
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+					
+					CtBancoOccidenteVentasDAO ctDAO = new CtBancoOccidenteVentasDAO(dg_altitude);
+					resultado = ctDAO.insertCtBancoOccidenteVentas(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info("Error en crearContactosBancoagrario: ", e);
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+	
+	/**
+	 * Crea los contactos nuevos en la tabla ct_bancoagrario
+	 * 
+	 * @param campanaNombre
+	 * @param contactos
+	 * @return
+	 * @throws LogicaException
+	 */
+	public Integer crearContactosSegurosbolivarPortafolio(String campanaNombre, List<PhContactBean> contactos) throws LogicaException {
+		Integer resultado = 0;
+		try {
+			if (null != contactos && contactos.size() > 0) {
+				PhContactDAO phContactDAO = new PhContactDAO(dg_altitude);
+				resultado = phContactDAO.insertContactos(contactos);
+
+				if (contactos.size() == resultado) {
+					logger.info("[Paso 3/4] Se crearón correctamente " + resultado + " contactos en Altitude");
+					List<CtSegurosbolivarPortafolioBean> cts = new ArrayList<CtSegurosbolivarPortafolioBean>();
+					List<ContactPhone> telefonos = new ArrayList<ContactPhone>();
+					for (PhContactBean contactot : contactos) {
+						contactot.getCt().setEasycode(contactot.getCode());
+						cts.add((CtSegurosbolivarPortafolioBean) contactot.getCt());
+						telefonos.add(nuevoContactPhone(contactot.getCode(), PhoneEnum.telefono1, TELEFONO_DEFAULT));
+					}
+
+					CtSegurosbolivarPortafolioDAO ctDAO = new CtSegurosbolivarPortafolioDAO(dg_altitude);
+					resultado = ctDAO.insertCtSegurosbolivarPortafolio(campanaNombre, cts);
+					if (cts.size() == resultado) {
+						logger.info("[Paso 4/5] Se crearón correctamente " + resultado + " contactos en la CT");
+						ContactPhoneDAO contactPhoneDAO = new ContactPhoneDAO(dg_altitude);
+						resultado = contactPhoneDAO.insertContactPhone(telefonos);
+						if (telefonos.size() == resultado) {
+							logger.info("[Paso 5/5] Se crearón correctamente " + resultado + " teléfonos en ContactPhone");
+						} else {
+							throw new LogicaException("Error: [Paso 5/5] Solo se crearón  " + resultado + " de " + telefonos.size() + " teléfonos en ContactPhone");
+						}
+					} else {
+						throw new LogicaException("Error: [Paso 4/5] Solo se crearón  " + resultado + " de " + cts.size() + " contactos en la CT");
+					}
+				} else {
+					throw new LogicaException("Error: [Paso 3/5] Solo se crearón  " + resultado + " de " + contactos.size() + " contactos en Altitude");
+				}
+			}
+		} catch (DatoException e) {
+			logger.info("Error en crearContactosBancoagrario: ", e);
+			throw new LogicaException(e.getMessage());
+		}
+
+		return resultado;
+	}
+}

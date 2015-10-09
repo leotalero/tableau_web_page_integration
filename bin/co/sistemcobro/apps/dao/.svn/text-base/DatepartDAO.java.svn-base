@@ -1,0 +1,66 @@
+package co.sistemcobro.apps.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+//import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.apps.bean.Datepart;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class DatepartDAO extends BaseDAO {
+
+	//private Logger logger = Logger.getLogger(DatepartDAO.class);
+
+	public DatepartDAO() {
+	}
+
+	public DatepartDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<Datepart> getDatepart(String iddatepart) throws DatoException {
+
+		List<Datepart> dateparts = new ArrayList<Datepart>();
+		Datepart datepart;
+
+		String queryDateparts = "select datepart, valor, nombre, nombrecorto "
+				+ "from altitude.datepart where datepart=? order by valor asc ";
+
+		try {
+
+			con = ds.getConnection();
+			ps = con.prepareStatement(queryDateparts);
+			ps.setString(1, iddatepart);
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				int cont = 1;
+				datepart = new Datepart();
+				datepart.setDatepart(rs.getString(cont++));
+				datepart.setValor(rs.getInt(cont++));
+				datepart.setNombre(rs.getString(cont++));
+				datepart.setNombrecorto(rs.getString(cont++));
+				dateparts.add(datepart);
+			}
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return dateparts;
+	}
+
+}

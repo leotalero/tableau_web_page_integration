@@ -1,0 +1,42 @@
+package co.sistemcobro.constelacion.constante;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
+public enum EstadoCargueEnum {
+	ELIMINADO(1), ACTIVO(2), DESACTIVADO(3);
+
+	public static final Map<Integer, EstadoCargueEnum> mapByID = new HashMap<Integer, EstadoCargueEnum>();
+	public static final Map<String, EstadoCargueEnum> mapByNAME = new HashMap<String, EstadoCargueEnum>();
+
+	static {
+		for (EstadoCargueEnum s : EnumSet.allOf(EstadoCargueEnum.class)) {
+			mapByID.put(s.getIndex(), s);
+			mapByNAME.put(s.name(), s);
+		}
+	}
+
+	private int index;
+
+	EstadoCargueEnum(int index) {
+		this.index = index;
+	}
+
+	public int getIndex() {
+		return index;
+	}
+
+	public String getIndexString() {
+		return String.valueOf(index);
+	}
+
+	public static EstadoCargueEnum get(int id) {
+		return mapByID.get(id);
+	}
+
+	public static EstadoCargueEnum get(String name) {
+		return mapByNAME.get(name);
+	}
+
+}

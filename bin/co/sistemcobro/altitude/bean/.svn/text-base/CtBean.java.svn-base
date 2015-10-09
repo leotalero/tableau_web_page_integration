@@ -1,0 +1,41 @@
+package co.sistemcobro.altitude.bean;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+
+public class CtBean {
+	private Integer easycode;
+	private PhContactBean contact;
+
+	public Integer getEasycode() {
+		return easycode;
+	}
+
+	public CtBean(Integer easycode, PhContactBean contact) {
+		super();
+		this.easycode = easycode;
+		this.contact = contact;
+	}
+
+	public CtBean() {
+		super();
+
+	}
+
+	public void setEasycode(Integer easycode) {
+		this.easycode = easycode;
+	}
+
+	public PhContactBean getContact() {
+		return contact;
+	}
+
+	public void setContact(PhContactBean contact) {
+		this.contact = contact;
+	}
+
+	
+}

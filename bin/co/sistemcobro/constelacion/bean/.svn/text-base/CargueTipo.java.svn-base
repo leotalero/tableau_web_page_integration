@@ -1,0 +1,116 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package co.sistemcobro.constelacion.bean;
+
+import java.io.Serializable;
+import java.util.List;
+import javax.persistence.Basic;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+
+/**
+ *
+ * @author jhurtado
+ */
+@Entity
+@Table(name = "cargue_tipo")
+@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "CargueTipo.findAll", query = "SELECT c FROM CargueTipo c")})
+public class CargueTipo implements Serializable {
+    private static final long serialVersionUID = 1L;
+    @Id
+    @Basic(optional = false)
+    @Column(name = "idcarguetipo")
+    private Integer idcarguetipo;
+    @Basic(optional = false)
+    @Column(name = "nombre")
+    private String nombre;
+    @Basic(optional = false)
+    @Column(name = "estado")
+    private short estado;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "idcarguetipo")
+    private List<Cargue> cargueList;
+
+    public CargueTipo() {
+    }
+
+    public CargueTipo(Integer idcarguetipo) {
+        this.idcarguetipo = idcarguetipo;
+    }
+
+    public CargueTipo(Integer idcarguetipo, String nombre, short estado) {
+        this.idcarguetipo = idcarguetipo;
+        this.nombre = nombre;
+        this.estado = estado;
+    }
+
+    public Integer getIdcarguetipo() {
+        return idcarguetipo;
+    }
+
+    public void setIdcarguetipo(Integer idcarguetipo) {
+        this.idcarguetipo = idcarguetipo;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public short getEstado() {
+        return estado;
+    }
+
+    public void setEstado(short estado) {
+        this.estado = estado;
+    }
+
+    @XmlTransient
+    public List<Cargue> getCargueList() {
+        return cargueList;
+    }
+
+    public void setCargueList(List<Cargue> cargueList) {
+        this.cargueList = cargueList;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        hash += (idcarguetipo != null ? idcarguetipo.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        // TODO: Warning - this method won't work in the case the id fields are not set
+        if (!(object instanceof CargueTipo)) {
+            return false;
+        }
+        CargueTipo other = (CargueTipo) object;
+        if ((this.idcarguetipo == null && other.idcarguetipo != null) || (this.idcarguetipo != null && !this.idcarguetipo.equals(other.idcarguetipo))) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "colsubsidio.CargueTipo[ idcarguetipo=" + idcarguetipo + " ]";
+    }
+    
+}

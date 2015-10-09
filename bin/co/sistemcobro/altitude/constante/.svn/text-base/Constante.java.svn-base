@@ -1,0 +1,38 @@
+package co.sistemcobro.altitude.constante;
+
+public class Constante {
+
+	public static final String FILE_CONFIG_ALTITUDE = "config_altitude";
+	public static String ROOT_FILE_TEMPORARY = "";
+	public static String USUARIO_SESSION = "usuariosession";
+	public static String APLICACION_SESSION = "aplicacionsession";
+
+	public String getUSUARIO_SESSION() {
+		return USUARIO_SESSION;
+	}
+
+	public void setUSUARIO_SESSION(String uSUARIO_SESSION) {
+		USUARIO_SESSION = uSUARIO_SESSION;
+	}
+
+	public String getAPLICACION_SESSION() {
+		return APLICACION_SESSION;
+	}
+
+	public void setAPLICACION_SESSION(String aPLICACION_SESSION) {
+		APLICACION_SESSION = aPLICACION_SESSION;
+	}
+
+	public static String getROOT_FILE_TEMPORARY() {
+		return ROOT_FILE_TEMPORARY;
+	}
+
+	public static void setROOT_FILE_TEMPORARY(String rOOT_FILE_TEMPORARY) {
+		ROOT_FILE_TEMPORARY = rOOT_FILE_TEMPORARY;
+	}
+
+	public static String getFileConfigAltitude() {
+		return FILE_CONFIG_ALTITUDE;
+	}
+
+}

@@ -1,0 +1,57 @@
+package co.sistemcobro.altitude.ejb;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.ejb.Stateless;
+
+//import lombok.SneakyThrows;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.altitude.bean.PhCampaignBean;
+import co.sistemcobro.altitude.dao.PhCampaignDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+@Stateless
+public class PhCampaignEJB extends BaseEJB {
+
+	public PhCampaignEJB() {
+	}
+
+	public List<PhCampaignBean> cargarListadoCampana() {
+
+		PhCampaignDAO phCampaignDAO = new PhCampaignDAO(dc_altitude);
+		List<PhCampaignBean> listaPhCampaignBeans = new ArrayList<PhCampaignBean>();
+
+		try {
+			listaPhCampaignBeans = phCampaignDAO.cargarListadoCampana();
+
+		} catch (DatoException e) {
+			e.printStackTrace();
+		}
+		return listaPhCampaignBeans;
+	}
+
+	public List<PhCampaignBean> getCampanas() {
+
+		PhCampaignDAO phCampaignDAO = new PhCampaignDAO(dc_altitude);
+		List<PhCampaignBean> campaigns = new ArrayList<PhCampaignBean>();
+
+		try {
+			campaigns = phCampaignDAO.getCampanas();
+
+		} catch (DatoException e) {
+			e.printStackTrace();
+		}
+		return campaigns;
+	}
+
+	// @SneakyThrows
+	public PhCampaignBean obtenerCampanaPorCodigo(int codigo) throws DatoException {
+		return new PhCampaignDAO(dc_altitude).obtenerCampanaPorCodigo(codigo);
+	}
+}

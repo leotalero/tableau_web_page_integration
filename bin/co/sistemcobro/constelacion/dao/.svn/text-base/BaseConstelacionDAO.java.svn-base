@@ -1,0 +1,253 @@
+package co.sistemcobro.constelacion.dao;
+
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.constante.EstadoEnum;
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.all.util.Util;
+import co.sistemcobro.constelacion.bean.Base;
+import co.sistemcobro.constelacion.bean.Cargue;
+import co.sistemcobro.constelacion.bean.CargueTipo;
+import co.sistemcobro.constelacion.constante.BaseTipoBusquedaEnum;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class BaseConstelacionDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(BaseConstelacionDAO.class);
+
+	public BaseConstelacionDAO(DataSource ds) {
+		this.ds = ds;
+	}
+	
+	
+	public Integer actualizarEstadoBase(Base base) {
+		Integer estatus = 0;
+		int c = 1;
+		try {
+			con = ds.getConnection();
+			StringBuilder q = new StringBuilder();
+			q.append("update constelacion.base set estado=?, idusuariomod=?, fechamod=getdate() where idbase=?  ");
+
+			ps = con.prepareStatement(q.toString());
+			c = 1;
+
+			ps.setInt(c++, base.getEstado());
+			ps.setInt(c++, base.getIdusuariomod());
+			ps.setInt(c++, base.getIdbase());
+
+			estatus = ps.executeUpdate();
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return estatus;
+
+	}
+
+	private static String SQL_BASE_X_ID = "select b.idbase, b.nombre, b.idusuariocrea, b.fechacrea, b.estado, "
+			+ "c.idcargue, c.idcarguetipo, c.idbase, c.nombrecargue ,c.registroscargados, c.registroseliminados, c.idusuariocrea, c.fechacrea, c.estado,  "
+			+ "ct.idcarguetipo, ct.nombrecarguetipo, ct.estado "
+			+ "from constelacion.base b "
+			+ "left join constelacion.cargue c on c.idbase=b.idbase "
+			+ "left join constelacion.cargue_tipo ct on ct.idcarguetipo=c.idcarguetipo "
+			+ "where b.idbase=? order by c.idcarguetipo, c.idcargue  ";
+
+	public Base getBasePorId(Integer idbase) throws DatoException {
+		Base base = null;
+		Cargue cargue = null;
+		CargueTipo carguetipo = null;
+		List<Cargue> cargues = null;
+
+		try {
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_BASE_X_ID.toString());
+			ps.setInt(1, idbase);
+			logger.info(SQL_BASE_X_ID);
+			rs = ps.executeQuery();
+
+			boolean ok = rs.next();
+
+			while (ok) {
+				base = new Base();
+				cargues = new ArrayList<Cargue>();
+
+				base.setIdbase(rs.getInt(1));
+				base.setNombre(rs.getString(2));
+				base.setIdusuariocrea(rs.getInt(3));
+				base.setFechacrea(rs.getTimestamp(4));
+				base.setEstado(rs.getShort(5));
+				
+				while (ok && base.getIdbase().equals(rs.getInt(1))) {
+
+					cargue = new Cargue();
+					cargue.setIdcargue(rs.getInt(6));
+					cargue.setIdcarguetipo(rs.getInt(7));
+					cargue.setIdbase(rs.getInt(8));
+					cargue.setNombre(rs.getString(9));
+					cargue.setRegistroscargados(rs.getInt(10));
+					cargue.setRegistroseliminados(rs.getInt(11));
+					cargue.setIdusuariocrea(rs.getInt(12));
+					cargue.setFechacrea(rs.getTimestamp(13));
+					cargue.setEstado(rs.getShort(14));
+
+					carguetipo = new CargueTipo();
+					carguetipo.setIdcarguetipo(rs.getInt(15));
+					carguetipo.setNombre(rs.getString(16));
+					carguetipo.setEstado(rs.getShort(17));
+
+					cargue.setCarguetipo(carguetipo);
+
+					cargues.add(cargue);
+					ok = rs.next();
+
+				}
+				base.setCargues(cargues);
+
+			}
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return base;
+
+	}
+
+	private static String SQL_BASE_CREAR = "insert into constelacion.base (nombre, "
+			+ " idusuariocrea, fechacrea, estado)  VALUES (?,?,GETDATE(),?) ";
+
+	public Integer insertarBase(Base base) {
+		Integer resultado = 0;
+		try {
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_BASE_CREAR.toString(),
+					Statement.RETURN_GENERATED_KEYS);
+			
+
+			ps.setString(1, base.getNombre());
+			ps.setInt(2, base.getIdusuariocrea());
+			ps.setInt(3, EstadoEnum.ACTIVO.getIndex());
+
+
+			resultado = ps.executeUpdate();
+
+			rs = ps.getGeneratedKeys();
+			if (rs.next()) {
+				base.setIdbase(rs.getInt(1));
+			} else {
+				throw new SQLException("Base, no se pudo generar su IDBASE.");
+			}
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return resultado;
+	}
+
+	
+	private static String SQL_BASES = "select b.idbase, b.nombre, b.idusuariocrea, b.fechacrea \r\n" + 
+			"from constelacion.base b \r\n" + 
+			"where b.estado=? \r\n" + 
+			"order by b.fechacrea desc";
+
+	public List<Base> getBases() {
+
+		List<Base> bases = new ArrayList<Base>();
+		Base base = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_BASES.toString());
+			ps.setInt(1, EstadoEnum.ACTIVO.getIndex());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				base = new Base();
+				base.setIdbase(rs.getInt(1));
+				base.setNombre(rs.getString(2));
+				base.setIdusuariocrea(rs.getInt(3));
+				base.setFechacrea(rs.getTimestamp(4));
+
+				bases.add(base);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return bases;
+
+	}
+
+	public List<Base> buscarBases(String desde, String hasta,
+			BaseTipoBusquedaEnum tipobusqueda, String estados) {
+
+		List<Base> bases = new ArrayList<Base>();
+		Base base = null;
+
+		try {
+			String SQL_BASES_BUSCAR = "select b.idbase,b.nombre, b.idusuariocrea, b.fechacrea, b.estado "
+					+ "from constelacion.base b where b.estado in ("+estados+")  ";
+
+			if (BaseTipoBusquedaEnum.FECHA_CREACION.getIndex() == tipobusqueda
+					.getIndex()) {
+				SQL_BASES_BUSCAR += "and b.fechacrea >= convert(datetime,'"
+						+ desde + "',112) "
+						+ "and b.fechacrea < convert(datetime,'"
+						+ Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else {
+				SQL_BASES_BUSCAR += "and b.idbase is null ";
+			}
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_BASES_BUSCAR.toString());
+
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				base = new Base();
+				base.setIdbase(rs.getInt(c++));
+				base.setNombre(rs.getString(c++));
+				base.setIdusuariocrea(rs.getInt(c++));
+				base.setFechacrea(rs.getTimestamp(c++));
+				base.setEstado(rs.getShort(c++));
+				bases.add(base);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return bases;
+	}
+}

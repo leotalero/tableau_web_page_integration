@@ -1,0 +1,29 @@
+package co.sistemcobro.altitude.bean;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class CtEtbventaBean extends CtBean {
+
+	private String ctidcliente;
+	private PhContactBean contacto;
+
+	public String getCtidcliente() {
+		return ctidcliente;
+	}
+
+	public void setCtidcliente(String ctidcliente) {
+		this.ctidcliente = ctidcliente;
+	}
+
+	public PhContactBean getContacto() {
+		return contacto;
+	}
+
+	public void setContacto(PhContactBean contacto) {
+		this.contacto = contacto;
+	}
+
+}

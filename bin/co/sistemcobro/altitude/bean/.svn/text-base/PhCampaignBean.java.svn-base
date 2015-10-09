@@ -1,0 +1,114 @@
+package co.sistemcobro.altitude.bean;
+
+import java.sql.Timestamp;
+import java.util.List;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class PhCampaignBean {
+
+	private Integer code;
+	private String shortname;
+	private String fullname;
+	private Short campaigntype;
+	private Short status;
+	private Timestamp foreseen_start;
+	private Timestamp foreseen_end;
+	private Integer foreseen_calls;
+	private Timestamp start_time;
+	private Timestamp end_time;
+
+	private List<DataContext> datacontexts;
+
+	public Integer getCode() {
+		return code;
+	}
+
+	public void setCode(Integer code) {
+		this.code = code;
+	}
+
+	public String getShortname() {
+		return shortname;
+	}
+
+	public void setShortname(String shortname) {
+		this.shortname = shortname;
+	}
+
+	public String getFullname() {
+		return fullname;
+	}
+
+	public void setFullname(String fullname) {
+		this.fullname = fullname;
+	}
+
+	public Short getCampaigntype() {
+		return campaigntype;
+	}
+
+	public void setCampaigntype(Short campaigntype) {
+		this.campaigntype = campaigntype;
+	}
+
+	public Short getStatus() {
+		return status;
+	}
+
+	public void setStatus(Short status) {
+		this.status = status;
+	}
+
+	public Timestamp getForeseen_start() {
+		return foreseen_start;
+	}
+
+	public void setForeseen_start(Timestamp foreseen_start) {
+		this.foreseen_start = foreseen_start;
+	}
+
+	public Timestamp getForeseen_end() {
+		return foreseen_end;
+	}
+
+	public void setForeseen_end(Timestamp foreseen_end) {
+		this.foreseen_end = foreseen_end;
+	}
+
+	public Integer getForeseen_calls() {
+		return foreseen_calls;
+	}
+
+	public void setForeseen_calls(Integer foreseen_calls) {
+		this.foreseen_calls = foreseen_calls;
+	}
+
+	public Timestamp getStart_time() {
+		return start_time;
+	}
+
+	public void setStart_time(Timestamp start_time) {
+		this.start_time = start_time;
+	}
+
+	public Timestamp getEnd_time() {
+		return end_time;
+	}
+
+	public void setEnd_time(Timestamp end_time) {
+		this.end_time = end_time;
+	}
+
+	public List<DataContext> getDatacontexts() {
+		return datacontexts;
+	}
+
+	public void setDatacontexts(List<DataContext> datacontexts) {
+		this.datacontexts = datacontexts;
+	}
+
+}

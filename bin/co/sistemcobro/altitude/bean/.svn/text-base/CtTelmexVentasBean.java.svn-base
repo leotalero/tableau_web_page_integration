@@ -1,0 +1,59 @@
+package co.sistemcobro.altitude.bean;
+
+import java.math.BigDecimal;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class CtTelmexVentasBean extends CtBean {
+
+	private BigDecimal ct_cuenta;
+	private String ct_ciudad;
+	private BigDecimal ct_idcliente;
+	private BigDecimal ct_idbase;
+
+	private PhContactBean contacto;
+
+	public PhContactBean getContacto() {
+		return contacto;
+	}
+
+	public void setContacto(PhContactBean contacto) {
+		this.contacto = contacto;
+	}
+
+	public BigDecimal getCt_cuenta() {
+		return ct_cuenta;
+	}
+
+	public void setCt_cuenta(BigDecimal ct_cuenta) {
+		this.ct_cuenta = ct_cuenta;
+	}
+
+	public String getCt_ciudad() {
+		return ct_ciudad;
+	}
+
+	public void setCt_ciudad(String ct_ciudad) {
+		this.ct_ciudad = ct_ciudad;
+	}
+
+	public BigDecimal getCt_idcliente() {
+		return ct_idcliente;
+	}
+
+	public void setCt_idcliente(BigDecimal ct_idcliente) {
+		this.ct_idcliente = ct_idcliente;
+	}
+
+	public BigDecimal getCt_idbase() {
+		return ct_idbase;
+	}
+
+	public void setCt_idbase(BigDecimal ct_idbase) {
+		this.ct_idbase = ct_idbase;
+	}
+
+}

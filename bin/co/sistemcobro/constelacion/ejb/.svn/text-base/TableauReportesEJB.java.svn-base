@@ -1,0 +1,135 @@
+package co.sistemcobro.constelacion.ejb;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ResourceBundle;
+
+import javax.ejb.Stateless;
+
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.log4j.Logger;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import co.sistemcobro.all.constante.EstadoEnum;
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.all.exception.ExcelException;
+import co.sistemcobro.all.exception.LogicaException;
+import co.sistemcobro.all.util.Excel;
+import co.sistemcobro.all.util.Ftp;
+import co.sistemcobro.all.util.Util;
+import co.sistemcobro.constelacion.bean.Base;
+import co.sistemcobro.constelacion.bean.Calculado;
+import co.sistemcobro.constelacion.bean.Cargue;
+import co.sistemcobro.constelacion.bean.CargueTipo;
+import co.sistemcobro.constelacion.bean.ClienteFiltro;
+import co.sistemcobro.constelacion.bean.DimensionArea;
+import co.sistemcobro.constelacion.bean.DimensionIndicador;
+import co.sistemcobro.constelacion.bean.DimensionTiempo;
+import co.sistemcobro.constelacion.bean.DimensionTiempoTipo;
+import co.sistemcobro.constelacion.bean.DimensionUsuario;
+import co.sistemcobro.constelacion.bean.Gestion;
+import co.sistemcobro.constelacion.bean.Hecho;
+import co.sistemcobro.constelacion.bean.HechoOperacion;
+import co.sistemcobro.constelacion.bean.Proyecto;
+import co.sistemcobro.constelacion.constante.BaseTipoBusquedaEnum;
+import co.sistemcobro.constelacion.constante.CargueTipoEnum;
+import co.sistemcobro.constelacion.constante.ConstanteConstelacion;
+import co.sistemcobro.constelacion.constante.EstadoCargueEnum;
+import co.sistemcobro.constelacion.constante.GestionTipoBusquedaEnum;
+import co.sistemcobro.constelacion.dao.BaseConstelacionDAO;
+import co.sistemcobro.constelacion.dao.CalculadoDAO;
+import co.sistemcobro.constelacion.dao.CalculadoDAO.FrecuenciaEnum;
+import co.sistemcobro.constelacion.dao.CargueDAO;
+import co.sistemcobro.constelacion.dao.CargueTipoDAO;
+import co.sistemcobro.constelacion.dao.DimensionAreaDAO;
+import co.sistemcobro.constelacion.dao.DimensionIndicadorDAO;
+import co.sistemcobro.constelacion.dao.DimensionTiempoDAO;
+import co.sistemcobro.constelacion.dao.DimensionTiempoTipoDAO;
+import co.sistemcobro.constelacion.dao.DimensionUsuarioDAO;
+import co.sistemcobro.constelacion.dao.KpiDAO;
+import co.sistemcobro.constelacion.dao.HechoDAO;
+import co.sistemcobro.constelacion.dao.HechoOperacionDAO;
+import co.sistemcobro.constelacion.dao.TableauDAO;
+import co.sistemcobro.rrhh.bean.Contrato;
+import co.sistemcobro.rrhh.dao.ContratoDAO;
+
+/**
+ * 
+ * @author Leonardo talero
+ * 
+ */
+
+@Stateless
+public class TableauReportesEJB extends BaseEJB {
+	private Logger logger = Logger.getLogger(TableauReportesEJB.class);
+	ResourceBundle config = ResourceBundle.getBundle(ConstanteConstelacion.FILE_CONFIG_CONSTELACION);
+
+	public TableauReportesEJB() {
+
+	}
+
+	
+public List<ClienteFiltro> getClienteFiltroyIdproyecto(String  codusuario,Long idproyecto) throws DatoException, LogicaException {
+		
+		List<ClienteFiltro> clientefiltros;
+		try {
+			TableauDAO  tableauDAO = new TableauDAO(dc_constelacion);
+		
+			clientefiltros=tableauDAO.getClienteFiltroyIdproyecto(codusuario,idproyecto);
+			
+		} catch (Exception e) {
+			throw new LogicaException(e.toString(), e.getCause());
+		}
+		return clientefiltros;	
+	}
+
+public List<Long> getProyectosporCodHermes(String codusuario) throws DatoException, LogicaException {
+					List<Long> proyectos;
+					try {
+						TableauDAO  tableauDAO = new TableauDAO(dc_constelacion);
+					
+						proyectos=tableauDAO.getProyectosporCodHermes(codusuario);
+						
+					} catch (Exception e) {
+						throw new LogicaException(e.toString(), e.getCause());
+					}
+					return proyectos;	
+		}
+	
+public List<Long> getAllProyectos() throws DatoException, LogicaException {
+	List<Long> proyectos;
+	try {
+		TableauDAO  tableauDAO = new TableauDAO(dc_constelacion);
+	
+		proyectos=tableauDAO.getAllProyectos();
+		
+	} catch (Exception e) {
+		throw new LogicaException(e.toString(), e.getCause());
+	}
+	return proyectos;	
+}
+
+public List<Proyecto> getProyectosporId(List<Long> idproyecto)  throws DatoException, LogicaException {
+	List<Proyecto> proyectos;
+	try {
+		TableauDAO  tableauDAO = new TableauDAO(dc_constelacion);
+	
+		proyectos=tableauDAO.getProyectosporId(idproyecto);
+		
+	} catch (Exception e) {
+		throw new LogicaException(e.toString(), e.getCause());
+	}
+	return proyectos;	
+}
+
+	}

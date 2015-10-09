@@ -1,0 +1,42 @@
+package co.sistemcobro.constelacion.constante;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
+public enum CargueTipoEnum {
+	HECHOS(1);
+
+	public static final Map<Integer, CargueTipoEnum> mapByID = new HashMap<Integer, CargueTipoEnum>();
+	public static final Map<String, CargueTipoEnum> mapByNAME = new HashMap<String, CargueTipoEnum>();
+
+	static {
+		for (CargueTipoEnum s : EnumSet.allOf(CargueTipoEnum.class)) {
+			mapByID.put(s.getIndex(), s);
+			mapByNAME.put(s.name(), s);
+		}
+	}
+
+	private int index;
+
+	CargueTipoEnum(int index) {
+		this.index = index;
+	}
+
+	public int getIndex() {
+		return index;
+	}
+
+	public String getIndexString() {
+		return String.valueOf(index);
+	}
+
+	public static CargueTipoEnum get(int id) {
+		return mapByID.get(id);
+	}
+
+	public static CargueTipoEnum get(String name) {
+		return mapByNAME.get(name);
+	}
+
+}

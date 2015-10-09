@@ -1,0 +1,44 @@
+package co.sistemcobro.altitude.ejb;
+
+import java.util.List;
+
+import javax.ejb.Stateless;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.altitude.bean.PhEUserBean;
+import co.sistemcobro.altitude.constante.PhEUserTipoBusquedaEnum;
+import co.sistemcobro.altitude.dao.PhEUserDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+@Stateless
+public class PhEUserEJB extends BaseEJB {
+	private Logger logger = Logger.getLogger(PhEUserEJB.class);
+
+	public PhEUserEJB() {
+	}
+
+	public List<PhEUserBean> buscarUsuarios(String valor,
+			PhEUserTipoBusquedaEnum tipobusqueda) {
+
+		if (PhEUserTipoBusquedaEnum.NOMBRE.getIndex() == tipobusqueda
+				.getIndex()
+				|| PhEUserTipoBusquedaEnum.USUARIO.getIndex() == tipobusqueda
+						.getIndex()) {
+			if (null != valor && valor.length() > 0) {
+				valor = "%" + valor.trim().replace(" ", "%") + "%";
+			} else {
+				valor = "%";
+			}
+		}
+		logger.info("");
+		PhEUserDAO phEUserDAO = new PhEUserDAO(dc_altitude);
+		return phEUserDAO.buscarUsuarios(valor, tipobusqueda);
+	}
+
+	
+}

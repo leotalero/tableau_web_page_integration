@@ -1,0 +1,476 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package co.sistemcobro.constelacion.bean;
+
+import java.io.Serializable;
+import java.sql.Timestamp;
+import java.util.List;
+
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.xml.bind.annotation.XmlRootElement;
+
+/**
+ * 
+ * @author jhurtado
+ */
+@Entity
+@Table(name = "gestion")
+@XmlRootElement
+@NamedQueries({ @NamedQuery(name = "Gestion.findAll", query = "SELECT g FROM Gestion g") })
+public class Gestion implements Serializable {
+	private static final long serialVersionUID = 1L;
+	@Id
+	@Basic(optional = false)
+	@Column(name = "idgestion")
+	private Integer idgestion;
+	
+	@Column(name = "idtipificacion")
+	private Integer idtipificacion;
+	
+	@Column(name = "idparentesco")
+	private Integer idparentesco;
+	
+	@Column(name = "idrazonnopago")
+	private Integer idrazonnopago;
+	
+	@Column(name = "idsucursal")
+	private Integer idsucursal;
+	
+	@Column(name = "nombredecobrador")
+	private String nombredecobrador;
+	
+	@Column(name = "numcuotas")
+	private Integer numcuotas;
+	
+	@Column(name = "fechaultimacuota")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Timestamp fechaultimacuota;
+	
+	@Column(name = "fechapromesa")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Timestamp fechapromesa;
+	
+	@Basic(optional = false)
+	@Column(name = "fechainicio")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Timestamp fechainicio;
+	
+	@Basic(optional = false)
+	@Column(name = "fechafin")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Timestamp fechafin;
+	
+	@Column(name = "fechainiciollamada")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Timestamp fechainiciollamada;
+	
+	@Column(name = "fechafinllamada")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Timestamp fechafinllamada;
+	
+	@Basic(optional = false)
+	@Column(name = "telefonomarcado")
+	private String telefonomarcado;
+
+	@Column(name = "valorpromesa")
+	private Double valorpromesa;
+	
+	@Column(name = "montoreal")
+	private Double montoreal;
+
+	@Column(name = "correo")
+	private String correo;
+
+	@Column(name = "telefonoadicional")
+	private String telefonoadicional;
+
+	@Column(name = "reconexion")
+	private String reconexion;
+
+	@Column(name = "nombretercero")
+	private String nombretercero;
+
+	@Column(name = "fechaagendamiento")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Timestamp fechaagendamiento;
+	
+	@Column(name = "telefonoagendamiento")
+	private String telefonoagendamiento;
+	
+	@Column(name = "telefonofijo")
+	private String telefonofijo;
+	
+	@Column(name = "telefonomovistar")
+	private String telefonomovistar;
+	
+	@Column(name = "telefonootrooperador")
+	private String telefonootrooperador;
+	
+	@Basic(optional = false)
+	@Column(name = "idusuarioaltitude")
+	private int idusuarioaltitude;
+	@Basic(optional = false)
+	
+	
+	@Column(name = "usernamealtitude")
+	private String usernamealtitude;
+
+	@Basic(optional = false)
+	@Column(name = "fullnamealtitude")
+	private String fullnamealtitude;
+
+	@Column(name = "idcampanaaltitude")
+	private int idcampanaaltitude;
+
+	@Column(name = "campanaaltitude")
+	private String campanaaltitude;
+
+	@Column(name = "easycodealtitude")
+	private int easycodealtitude;
+
+	@Column(name = "observacion")
+	private String observacion;
+
+	@Basic(optional = false)
+	@Column(name = "idusuariocrea")
+	private int idusuariocrea;
+
+	@Basic(optional = false)
+	@Column(name = "fechacrea")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Timestamp fechacrea;
+
+	@Basic(optional = false)
+	@Column(name = "estado")
+	private short estado;
+
+	//@JoinTable(name = "obligacion_gestion", joinColumns = { @JoinColumn(name = "idgestion", referencedColumnName = "idgestion") }, inverseJoinColumns = { @JoinColumn(name = "idobligacion", referencedColumnName = "idobligacion") })
+	//@ManyToMany
+	//private List<Obligacion> obligaciones;
+	
+	
+	
+	public Integer getIdgestion() {
+		return idgestion;
+	}
+
+	public void setIdgestion(Integer idgestion) {
+		this.idgestion = idgestion;
+	}
+
+	public Integer getIdtipificacion() {
+		return idtipificacion;
+	}
+
+	public void setIdtipificacion(Integer idtipificacion) {
+		this.idtipificacion = idtipificacion;
+	}
+
+	public Integer getIdparentesco() {
+		return idparentesco;
+	}
+
+	public void setIdparentesco(Integer idparentesco) {
+		this.idparentesco = idparentesco;
+	}
+
+	public Integer getIdrazonnopago() {
+		return idrazonnopago;
+	}
+
+	public void setIdrazonnopago(Integer idrazonnopago) {
+		this.idrazonnopago = idrazonnopago;
+	}
+
+	public Integer getIdsucursal() {
+		return idsucursal;
+	}
+
+	public void setIdsucursal(Integer idsucursal) {
+		this.idsucursal = idsucursal;
+	}
+
+	public Timestamp getFechainicio() {
+		return fechainicio;
+	}
+
+	public void setFechainicio(Timestamp fechainicio) {
+		this.fechainicio = fechainicio;
+	}
+
+	public Timestamp getFechafin() {
+		return fechafin;
+	}
+
+	public void setFechafin(Timestamp fechafin) {
+		this.fechafin = fechafin;
+	}
+
+	public Timestamp getFechainiciollamada() {
+		return fechainiciollamada;
+	}
+
+	public void setFechainiciollamada(Timestamp fechainiciollamada) {
+		this.fechainiciollamada = fechainiciollamada;
+	}
+
+	public Timestamp getFechafinllamada() {
+		return fechafinllamada;
+	}
+
+	public void setFechafinllamada(Timestamp fechafinllamada) {
+		this.fechafinllamada = fechafinllamada;
+	}
+
+	public String getTelefonomarcado() {
+		return telefonomarcado;
+	}
+
+	public void setTelefonomarcado(String telefonomarcado) {
+		this.telefonomarcado = telefonomarcado;
+	}
+
+	public Double getValorpromesa() {
+		return valorpromesa;
+	}
+
+	public void setValorpromesa(Double valorpromesa) {
+		this.valorpromesa = valorpromesa;
+	}
+
+	public String getCorreo() {
+		return correo;
+	}
+
+	public void setCorreo(String correo) {
+		this.correo = correo;
+	}
+
+	public String getTelefonoadicional() {
+		return telefonoadicional;
+	}
+
+	public void setTelefonoadicional(String telefonoadicional) {
+		this.telefonoadicional = telefonoadicional;
+	}
+
+	public String getReconexion() {
+		return reconexion;
+	}
+
+	public void setReconexion(String reconexion) {
+		this.reconexion = reconexion;
+	}
+
+	public String getNombretercero() {
+		return nombretercero;
+	}
+
+	public void setNombretercero(String nombretercero) {
+		this.nombretercero = nombretercero;
+	}
+
+	public Timestamp getFechaagendamiento() {
+		return fechaagendamiento;
+	}
+
+	public void setFechaagendamiento(Timestamp fechaagendamiento) {
+		this.fechaagendamiento = fechaagendamiento;
+	}
+
+	public String getTelefonoagendamiento() {
+		return telefonoagendamiento;
+	}
+
+	public void setTelefonoagendamiento(String telefonoagendamiento) {
+		this.telefonoagendamiento = telefonoagendamiento;
+	}
+
+	public String getTelefonofijo() {
+		return telefonofijo;
+	}
+
+	public void setTelefonofijo(String telefonofijo) {
+		this.telefonofijo = telefonofijo;
+	}
+
+	public String getTelefonomovistar() {
+		return telefonomovistar;
+	}
+
+	public void setTelefonomovistar(String telefonomovistar) {
+		this.telefonomovistar = telefonomovistar;
+	}
+
+	public String getTelefonootrooperador() {
+		return telefonootrooperador;
+	}
+
+	public void setTelefonootrooperador(String telefonootrooperador) {
+		this.telefonootrooperador = telefonootrooperador;
+	}
+
+	public int getIdusuarioaltitude() {
+		return idusuarioaltitude;
+	}
+
+	public void setIdusuarioaltitude(int idusuarioaltitude) {
+		this.idusuarioaltitude = idusuarioaltitude;
+	}
+
+	public String getUsernamealtitude() {
+		return usernamealtitude;
+	}
+
+	public void setUsernamealtitude(String usernamealtitude) {
+		this.usernamealtitude = usernamealtitude;
+	}
+
+	public String getFullnamealtitude() {
+		return fullnamealtitude;
+	}
+
+	public void setFullnamealtitude(String fullnamealtitude) {
+		this.fullnamealtitude = fullnamealtitude;
+	}
+
+	public int getIdcampanaaltitude() {
+		return idcampanaaltitude;
+	}
+
+	public void setIdcampanaaltitude(int idcampanaaltitude) {
+		this.idcampanaaltitude = idcampanaaltitude;
+	}
+
+	public String getCampanaaltitude() {
+		return campanaaltitude;
+	}
+
+	public void setCampanaaltitude(String campanaaltitude) {
+		this.campanaaltitude = campanaaltitude;
+	}
+
+	public int getEasycodealtitude() {
+		return easycodealtitude;
+	}
+
+	public void setEasycodealtitude(int easycodealtitude) {
+		this.easycodealtitude = easycodealtitude;
+	}
+
+	public String getObservacion() {
+		return observacion;
+	}
+
+	public void setObservacion(String observacion) {
+		this.observacion = observacion;
+	}
+
+	public int getIdusuariocrea() {
+		return idusuariocrea;
+	}
+
+	public void setIdusuariocrea(int idusuariocrea) {
+		this.idusuariocrea = idusuariocrea;
+	}
+
+	public Timestamp getFechacrea() {
+		return fechacrea;
+	}
+
+	public void setFechacrea(Timestamp fechacrea) {
+		this.fechacrea = fechacrea;
+	}
+
+	public short getEstado() {
+		return estado;
+	}
+
+	public void setEstado(short estado) {
+		this.estado = estado;
+	}
+
+	
+	public Timestamp getFechapromesa() {
+		return fechapromesa;
+	}
+
+	public void setFechapromesa(Timestamp fechapromesa) {
+		this.fechapromesa = fechapromesa;
+	}
+
+	public String getNombredecobrador() {
+		return nombredecobrador;
+	}
+
+	public void setNombredecobrador(String nombredecobrador) {
+		this.nombredecobrador = nombredecobrador;
+	}
+
+	public Integer getNumcuotas() {
+		return numcuotas;
+	}
+
+	public void setNumcuotas(Integer numcuotas) {
+		this.numcuotas = numcuotas;
+	}
+
+	public Timestamp getFechaultimacuota() {
+		return fechaultimacuota;
+	}
+
+	public void setFechaultimacuota(Timestamp fechaultimacuota) {
+		this.fechaultimacuota = fechaultimacuota;
+	}
+
+	public Double getMontoreal() {
+		return montoreal;
+	}
+
+	public void setMontoreal(Double montoreal) {
+		this.montoreal = montoreal;
+	}
+
+
+	@Override
+	public int hashCode() {
+		int hash = 0;
+		hash += (idgestion != null ? idgestion.hashCode() : 0);
+		return hash;
+	}
+
+	@Override
+	public boolean equals(Object object) {
+		// TODO: Warning - this method won't work in the case the id fields are
+		// not set
+		if (!(object instanceof Gestion)) {
+			return false;
+		}
+		Gestion other = (Gestion) object;
+		if ((this.idgestion == null && other.idgestion != null) || (this.idgestion != null && !this.idgestion.equals(other.idgestion))) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "constelacion.Gestion[ idgestion=" + idgestion + " ]";
+	}
+
+}

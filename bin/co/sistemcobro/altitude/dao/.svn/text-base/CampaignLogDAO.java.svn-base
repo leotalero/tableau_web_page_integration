@@ -1,0 +1,54 @@
+package co.sistemcobro.altitude.dao;
+
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class CampaignLogDAO extends BaseDAO {
+//	private Logger logger = Logger.getLogger(CampaignLogDAO.class);
+
+	public CampaignLogDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	private static String SQL_CAMPANA_ESTADO = "select duration FROM  campaign_log c WHERE campaign = ? "
+			+ "and c.code = (select  max(c1.code) from  campaign_log c1 where c1.campaign=c.campaign and op_type=0)";
+
+	public Boolean isCampanaAbierta(Integer idcampana) throws DatoException {
+
+		Boolean isAbierta = true;
+
+		try {
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_CAMPANA_ESTADO.toString());
+			ps.setInt(1, idcampana);
+			rs = ps.executeQuery();
+
+			if (rs.next()) {
+				String valor = rs.getString(1);
+				if (null != valor) {
+					isAbierta = false;
+				}
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return isAbierta;
+
+	}
+}

@@ -1,0 +1,197 @@
+package co.sistemcobro.altitude.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
+
+import javax.sql.DataSource;
+
+//import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.all.util.Util;
+import co.sistemcobro.altitude.bean.CallThread;
+import co.sistemcobro.altitude.bean.DataContext;
+import co.sistemcobro.altitude.bean.DataTransaction;
+import co.sistemcobro.altitude.bean.GlobalCall;
+import co.sistemcobro.altitude.bean.HumanBean;
+import co.sistemcobro.altitude.bean.PhCampaignBean;
+import co.sistemcobro.altitude.bean.PhEUserBean;
+import co.sistemcobro.altitude.bean.Thread;
+import co.sistemcobro.apps.bean.Origin;
+import co.sistemcobro.apps.bean.TerminationStatus;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class DataContextDAO extends BaseDAO {
+	//private Logger logger = Logger.getLogger(DataContextDAO.class);
+
+	public DataContextDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<DataContext> buscarLlamadas(Calendar desde, Calendar hasta,
+			String idcampanas,String idterminationsstatus, String telefono, String agente, String easycode)
+			throws DatoException {
+
+		List<DataContext> llamadas = new ArrayList<DataContext>();
+
+		DataContext datacontext = null;
+		Thread thread = null;
+		CallThread callthread = null;
+		GlobalCall globalcall = null;
+		PhCampaignBean phcampaign = null;
+
+		DataTransaction datatransaction = null;
+		PhEUserBean pheuser = null;
+		HumanBean human = null;
+
+		Origin origin = null;
+		TerminationStatus terminationstatus = null;
+
+		try {
+
+			String SQL_LLAMADAS_BUSCAR = "select dc.contact as easycode, dc.campaign, "
+					+ "ca.code, ca.shortname, "
+					+ "th.code, th.origin, th.start_time as fecha_llamada, "
+					+ "(select top 1 s.extension "
+					+ "from altitude.dbo.segment s "
+					+ "where s.thread=th.code) as extension , "
+					+ "isnull((select  sum(s.duration)/10  "
+					+ "from altitude.dbo.segment s "
+					+ "where s.thread=th.code and s.state in (6,7)),0) as duracion, "
+					+ "thr.code, thr.termination_status, thr.recording_key, "
+					+ "gc.ph_number as Telefono,  "
+					+ "dt.code,  "
+					+ "e.code, e.active as agente_activo, e.usr_name, "
+					+ "h.agent, h.fullname,  "
+					+ "o.idorigin, o.nombre, "
+					+ "t.idterminationstatus, t.nombre "					
+					+ "from dbo.data_context dc  WITH (NOLOCK)  "
+					+ "inner join dbo.thread th  WITH (NOLOCK) on th.data_context = dc.code "
+					+ "inner join dbo.call_thread thr  WITH (NOLOCK) on thr.code=th.code  "
+					+ "inner join dbo.global_call gc  WITH (NOLOCK) on thr.global_call=gc.code "
+					+ "inner join dbo.ph_campaign ca  WITH (NOLOCK) on  ca.code=dc.campaign "
+					+ "left join dbo.data_transaction dt  WITH (NOLOCK) on dc.code = dt.data_context "
+					+ "left join dbo.ph_e_user e  WITH (NOLOCK) on e.code = dt.e_user  "
+					+ "left join dbo.human h  WITH (NOLOCK) on h.agent = e.code  "
+					+ "left join apps.altitude.origin o  WITH (NOLOCK) on o.idorigin=th.origin "
+					+ "left join apps.altitude.termination_status t  WITH (NOLOCK) on t.idterminationstatus=thr.termination_status "
+					+ "where th.start_time >= convert(datetime,?,112) "
+					+ "and th.start_time < DATEADD(day, 1, convert(datetime,?,112)) ";
+
+			if (idcampanas != null && idcampanas.length() > 0) {
+				SQL_LLAMADAS_BUSCAR += "and dc.campaign in (" + idcampanas
+						+ ") ";
+			}
+			
+			if (idterminationsstatus != null && idterminationsstatus.length() > 0) {
+				SQL_LLAMADAS_BUSCAR += "and thr.termination_status in (" + idterminationsstatus
+						+ ") ";
+			}
+
+			if (telefono != null && telefono.length() > 0) {
+				SQL_LLAMADAS_BUSCAR += "and  gc.ph_number like '%" + telefono
+						+ "%' ";
+			}
+
+			if (agente != null && agente.length() > 0) {
+				SQL_LLAMADAS_BUSCAR += "and  e.usr_name = '" + agente + "' ";
+			}
+
+			if (easycode != null && easycode.length() > 0) {
+				SQL_LLAMADAS_BUSCAR += "and  dc.contact = " + easycode + " ";
+			}
+
+			SQL_LLAMADAS_BUSCAR += "order by th.start_time desc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_LLAMADAS_BUSCAR.toString());
+			ps.setString(
+					1,
+					Util.calendarToString(desde, "yyyyMMdd",
+							Locale.getDefault()));
+			ps.setString(
+					2,
+					Util.calendarToString(hasta, "yyyyMMdd",
+							Locale.getDefault()));
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+
+				datacontext = new DataContext();
+				datacontext.setIdcontac(rs.getInt(c++));
+				datacontext.setIdcampaing(rs.getInt(c++));
+
+				phcampaign = new PhCampaignBean();
+				phcampaign.setCode(rs.getInt(c++));
+				phcampaign.setShortname(rs.getString(c++));
+
+				thread = new Thread();
+				thread.setCode(rs.getInt(c++));
+				thread.setIdorigin(rs.getShort(c++));
+				thread.setStart_time(rs.getTimestamp(c++));
+				thread.setExtension(rs.getString(c++));
+				thread.setDuracion(rs.getLong(c++));
+
+				callthread = new CallThread();
+				callthread.setCode(rs.getInt(c++));
+				callthread.setTermination_status(rs.getShort(c++));
+				callthread.setRecording_key(rs.getString(c++));
+
+				globalcall = new GlobalCall();
+				globalcall.setPh_number(rs.getString(c++));
+
+				datatransaction = new DataTransaction();
+				datatransaction.setCode(rs.getInt(c++));
+
+				pheuser = new PhEUserBean();
+				pheuser.setCode(rs.getInt(c++));
+				pheuser.setActive(rs.getShort(c++));
+				pheuser.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setAgent(rs.getInt(c++));
+				human.setFullname(rs.getString(c++));
+
+				origin = new Origin();
+				origin.setIdorigin(rs.getInt(c++));
+				origin.setNombre(rs.getString(c++));
+
+				terminationstatus = new TerminationStatus();
+				terminationstatus.setIdterminationstatus(rs.getInt(c++));
+				terminationstatus.setNombre(rs.getString(c++));
+
+				pheuser.setHuman(human);
+				callthread.setGlobalcall(globalcall);
+				callthread.setTerminationStatus(terminationstatus);
+				datatransaction.setPheuser(pheuser);
+				thread.setCallthread(callthread);
+				thread.setOrigin(origin);
+
+				datacontext.setCampaing(phcampaign);
+				datacontext.setDatatransaction(datatransaction);
+				datacontext.setThread(thread);
+				llamadas.add(datacontext);
+
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return llamadas;
+	}
+}

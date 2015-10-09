@@ -1,0 +1,43 @@
+package co.sistemcobro.constelacion.constante;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
+public enum KpiTipoBusquedaEnum {
+	KPI_USUARIOS(1);
+
+	public static final Map<Integer, KpiTipoBusquedaEnum> mapByID = new HashMap<Integer, KpiTipoBusquedaEnum>();
+	public static final Map<String, KpiTipoBusquedaEnum> mapByNAME = new HashMap<String, KpiTipoBusquedaEnum>();
+
+	static {
+		for (KpiTipoBusquedaEnum s : EnumSet
+				.allOf(KpiTipoBusquedaEnum.class)) {
+			mapByID.put(s.getIndex(), s);
+			mapByNAME.put(s.name(), s);
+		}
+	}
+
+	private int index;
+
+	KpiTipoBusquedaEnum(int index) {
+		this.index = index;
+	}
+
+	public int getIndex() {
+		return index;
+	}
+
+	public String getIndexString() {
+		return String.valueOf(index);
+	}
+
+	public static KpiTipoBusquedaEnum get(int id) {
+		return mapByID.get(id);
+	}
+
+	public static KpiTipoBusquedaEnum get(String name) {
+		return mapByNAME.get(name);
+	}
+
+}

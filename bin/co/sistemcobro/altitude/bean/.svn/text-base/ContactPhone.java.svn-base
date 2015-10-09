@@ -1,0 +1,145 @@
+package co.sistemcobro.altitude.bean;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class ContactPhone {
+
+	private Integer contact;
+	private Integer phone;
+	private Short active;
+	private Short p_status;
+	private String ph_number;
+	private Short ntries_busy;
+	private Short ntries_noanswer;
+	private Short ntries_machine;
+	private Short ntries_fax;
+	private Short ntries_modem;
+	private Short ntries_rejected;
+	private Short ntries_invalid;
+	private Short ntries_lineovrflw;
+	private Short ntries_per_day;
+
+	public Integer getContact() {
+		return contact;
+	}
+
+	public void setContact(Integer contact) {
+		this.contact = contact;
+	}
+
+	public Integer getPhone() {
+		return phone;
+	}
+
+	public void setPhone(Integer phone) {
+		this.phone = phone;
+	}
+
+	public Short getActive() {
+		return active;
+	}
+
+	public void setActive(Short active) {
+		this.active = active;
+	}
+
+	public Short getP_status() {
+		return p_status;
+	}
+
+	public void setP_status(Short p_status) {
+		this.p_status = p_status;
+	}
+
+	public String getPh_number() {
+		return ph_number;
+	}
+
+	public void setPh_number(String ph_number) {
+		this.ph_number = ph_number;
+	}
+
+	public Short getNtries_busy() {
+		return ntries_busy;
+	}
+
+	public void setNtries_busy(Short ntries_busy) {
+		this.ntries_busy = ntries_busy;
+	}
+
+	public Short getNtries_noanswer() {
+		return ntries_noanswer;
+	}
+
+	public void setNtries_noanswer(Short ntries_noanswer) {
+		this.ntries_noanswer = ntries_noanswer;
+	}
+
+	public Short getNtries_machine() {
+		return ntries_machine;
+	}
+
+	public void setNtries_machine(Short ntries_machine) {
+		this.ntries_machine = ntries_machine;
+	}
+
+	public Short getNtries_fax() {
+		return ntries_fax;
+	}
+
+	public void setNtries_fax(Short ntries_fax) {
+		this.ntries_fax = ntries_fax;
+	}
+
+	public Short getNtries_modem() {
+		return ntries_modem;
+	}
+
+	public void setNtries_modem(Short ntries_modem) {
+		this.ntries_modem = ntries_modem;
+	}
+
+	public Short getNtries_rejected() {
+		return ntries_rejected;
+	}
+
+	public void setNtries_rejected(Short ntries_rejected) {
+		this.ntries_rejected = ntries_rejected;
+	}
+
+	public Short getNtries_invalid() {
+		return ntries_invalid;
+	}
+
+	public void setNtries_invalid(Short ntries_invalid) {
+		this.ntries_invalid = ntries_invalid;
+	}
+
+	public Short getNtries_lineovrflw() {
+		return ntries_lineovrflw;
+	}
+
+	public void setNtries_lineovrflw(Short ntries_lineovrflw) {
+		this.ntries_lineovrflw = ntries_lineovrflw;
+	}
+
+	public Short getNtries_per_day() {
+		return ntries_per_day;
+	}
+
+	public void setNtries_per_day(Short ntries_per_day) {
+		this.ntries_per_day = ntries_per_day;
+	}
+
+	@Override
+	public String toString() {
+		return "ContactPhone [contact=" + contact + ", phone=" + phone + ", active=" + active + ", p_status=" + p_status + ", ph_number=" + ph_number + ", ntries_busy=" + ntries_busy + ", ntries_noanswer=" + ntries_noanswer + ", ntries_machine=" + ntries_machine + ", ntries_fax=" + ntries_fax
+				+ ", ntries_modem=" + ntries_modem + ", ntries_rejected=" + ntries_rejected + ", ntries_invalid=" + ntries_invalid + ", ntries_lineovrflw=" + ntries_lineovrflw + ", ntries_per_day=" + ntries_per_day + "]";
+	}
+	
+	
+
+}

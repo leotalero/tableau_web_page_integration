@@ -1,0 +1,149 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package co.sistemcobro.constelacion.bean;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Timestamp;
+
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlRootElement;
+
+
+/**
+ * 
+ * @author jhurtado
+ */
+@Entity
+public class HechoOperacion implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+	@Column(name = "idcargue")
+	private Integer idcargue;
+	
+	private BigInteger iddimensionarea ;
+	private BigInteger iddimensionindicador ;
+	private BigInteger iddimensiontiempo ;
+	private BigInteger iddimensionusuario ;
+	private BigDecimal valorindicador ;
+	private BigDecimal valormeta ;
+
+	@Column(name = "idusuariocrea")
+	private Integer idusuariocrea;
+	@Column(name = "fechacrea")
+	private Timestamp fechacrea;
+	@Column(name = "estado")
+	private short estado;
+
+	private DimensionIndicador dimensionindicador;
+	private DimensionArea dimensionarea;
+	
+	public Integer getIdcargue() {
+		return idcargue;
+	}
+
+	public void setIdcargue(Integer idcargue) {
+		this.idcargue = idcargue;
+	}
+
+	public BigInteger getIddimensionarea() {
+		return iddimensionarea;
+	}
+
+	public void setIddimensionarea(BigInteger iddimensionarea) {
+		this.iddimensionarea = iddimensionarea;
+	}
+
+	public BigInteger getIddimensionindicador() {
+		return iddimensionindicador;
+	}
+
+	public void setIddimensionindicador(BigInteger iddimensionindicador) {
+		this.iddimensionindicador = iddimensionindicador;
+	}
+
+	public BigInteger getIddimensiontiempo() {
+		return iddimensiontiempo;
+	}
+
+	public void setIddimensiontiempo(BigInteger iddimensiontiempo) {
+		this.iddimensiontiempo = iddimensiontiempo;
+	}
+
+	public BigInteger getIddimensionusuario() {
+		return iddimensionusuario;
+	}
+
+	public void setIddimensionusuario(BigInteger iddimensionusuario) {
+		this.iddimensionusuario = iddimensionusuario;
+	}
+
+	public BigDecimal getValorindicador() {
+		return valorindicador;
+	}
+
+	public void setValorindicador(BigDecimal valorindicador) {
+		this.valorindicador = valorindicador;
+	}
+
+	public BigDecimal getValormeta() {
+		return valormeta;
+	}
+
+	public void setValormeta(BigDecimal valormeta) {
+		this.valormeta = valormeta;
+	}
+
+	public Integer getIdusuariocrea() {
+		return idusuariocrea;
+	}
+
+	public void setIdusuariocrea(Integer idusuariocrea) {
+		this.idusuariocrea = idusuariocrea;
+	}
+
+	public Timestamp getFechacrea() {
+		return fechacrea;
+	}
+
+	public void setFechacrea(Timestamp fechacrea) {
+		this.fechacrea = fechacrea;
+	}
+
+	public short getEstado() {
+		return estado;
+	}
+
+	public void setEstado(short estado) {
+		this.estado = estado;
+	}
+
+	public DimensionIndicador getDimensionindicador() {
+		return dimensionindicador;
+	}
+
+	public void setDimensionindicador(DimensionIndicador dimensionindicador) {
+		this.dimensionindicador = dimensionindicador;
+	}
+
+	public DimensionArea getDimensionarea() {
+		return dimensionarea;
+	}
+
+	public void setDimensionarea(DimensionArea dimensionarea) {
+		this.dimensionarea = dimensionarea;
+	}
+	
+	
+}

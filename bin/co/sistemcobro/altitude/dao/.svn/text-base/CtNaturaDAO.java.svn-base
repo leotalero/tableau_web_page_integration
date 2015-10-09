@@ -1,0 +1,90 @@
+package co.sistemcobro.altitude.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.altitude.bean.CtBean;
+import co.sistemcobro.altitude.bean.CtNaturaBean;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Fabio Alexander Orjuela Diaz
+ * 
+ */
+public class CtNaturaDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(CtNaturaDAO.class);
+
+	public CtNaturaDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<CtBean> buscarEasyCodesByCuenta(String campanaNombre, String cedulas) throws DatoException {
+
+		List<CtBean> cts = new ArrayList<CtBean>();
+		CtBean ct = null;
+
+		try {
+
+			String query = "select ct.easycode from altitude.dbo." + campanaNombre + " ct " + "where ct.ctCedula in ("+ cedulas + ") ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(query.toString());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				ct = new CtBean();
+				ct.setEasycode(rs.getInt(1));
+				cts.add(ct);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return cts;
+
+	}
+
+	public Integer insertCtNatura(String campanaNombre,List<CtNaturaBean> cts) throws DatoException {
+		Integer estatus = 0;
+		int c = 1;
+		try {
+			
+			con = ds.getConnection();
+			String SQL_CT_NATURA_INSERT = "insert into dbo."+ campanaNombre + " " + "(easycode,ct_cedula) "
+					+ "values (?, ?)";
+
+			ps = con.prepareStatement(SQL_CT_NATURA_INSERT.toString());
+			for (CtNaturaBean ct : cts) {
+				c = 1;
+				ps.setInt(c++, ct.getEasycode());
+				ps.setString(c++, ct.getCtcedula());
+				estatus = estatus + ps.executeUpdate();
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+
+		} catch (Exception e) {
+			logger.error("Atrapó la excepcion en insertCtNatura SQLEX: ", e);
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return estatus;
+
+	}
+
+}

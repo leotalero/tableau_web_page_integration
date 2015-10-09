@@ -1,0 +1,87 @@
+package co.sistemcobro.altitude.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.altitude.bean.CtClaropjuriBean;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class CtClaropjuriDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(CtClaropjuriDAO.class);
+
+	public CtClaropjuriDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<CtClaropjuriBean> buscarEasyCodesPorCuentas(String campanaNombre, String cuentas) throws DatoException {
+
+		List<CtClaropjuriBean> cts = new ArrayList<CtClaropjuriBean>();
+		CtClaropjuriBean ct = null;
+
+		try {
+
+			String query = "select ct.easycode, ct.ctcuenta from altitude.dbo." + campanaNombre + " ct " + "where ct.ctcuenta in (" + cuentas + ") ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(query.toString());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				ct = new CtClaropjuriBean();
+				ct.setEasycode(rs.getInt(1));
+				ct.setCtcuenta(rs.getString(2));
+				cts.add(ct);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return cts;
+
+	}
+
+	public Integer insertCtClaropjuri(String campanaNombre, List<CtClaropjuriBean> cts) throws DatoException {
+		logger.info("insertCt: campanaNombre:" + campanaNombre + ", cts:" + cts.size());
+		Integer estatus = 0;
+		int c = 1;
+		try {
+			con = ds.getConnection();
+			String SQL_CT_CLAROPJURI_INSERT = "insert into dbo." + campanaNombre + " " + "(easycode,ctcuenta) " + "values (?, ?)";
+
+			ps = con.prepareStatement(SQL_CT_CLAROPJURI_INSERT.toString());
+			for (CtClaropjuriBean ct : cts) {
+				c = 1;
+				ps.setInt(c++, ct.getEasycode());
+				ps.setString(c++, ct.getCtcuenta());
+				estatus = estatus + ps.executeUpdate();
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return estatus;
+	}
+
+}

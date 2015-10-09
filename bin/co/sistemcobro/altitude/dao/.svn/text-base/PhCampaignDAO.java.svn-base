@@ -1,0 +1,162 @@
+package co.sistemcobro.altitude.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.altitude.bean.PhCampaignBean;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class PhCampaignDAO extends BaseDAO {
+
+	public String QUERY_LISTADO_CAMPANAS;
+
+	public PhCampaignDAO() {
+	}
+
+	public PhCampaignDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<PhCampaignBean> getCampanas() throws DatoException {
+
+		List<PhCampaignBean> campaigns = new ArrayList<PhCampaignBean>();
+		PhCampaignBean campaign = null;
+
+		try {
+
+			String query = "select code, shortname, fullname, campaigntype, "
+					+ "status, foreseen_start, foreseen_end, foreseen_calls, start_time, end_time "
+					+ "from dbo.ph_campaign order by shortname ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(query.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				campaign = new PhCampaignBean();
+				campaign.setCode(rs.getInt(c++));
+				campaign.setShortname(rs.getString(c++));
+				campaign.setFullname(rs.getString(c++));
+				campaign.setCampaigntype(rs.getShort(c++));
+				campaign.setStatus(rs.getShort(c++));
+				campaign.setForeseen_start(rs.getTimestamp(c++));
+				campaign.setForeseen_end(rs.getTimestamp(c++));
+				campaign.setForeseen_calls(rs.getInt(c++));
+				campaign.setStart_time(rs.getTimestamp(c++));
+				campaign.setEnd_time(rs.getTimestamp(c++));
+				campaigns.add(campaign);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return campaigns;
+
+	}
+
+	public List<PhCampaignBean> cargarListadoCampana() throws DatoException {
+
+		PhCampaignBean phCampaignBean;
+		List<PhCampaignBean> listaPhCampaignBean = new ArrayList<PhCampaignBean>();
+
+		QUERY_LISTADO_CAMPANAS = "select " + " ph.code, " + " ph.shortname, "
+				+ " ph.fullname, " + " ph.campaigntype, " + " ph.status, "
+				+ " ph.foreseen_start, " + " ph.foreseen_end, "
+				+ " ph.foreseen_calls, " + " ph.start_time, " + " ph.end_time "
+				+ " from " + " ph_campaign ph, "
+				+ " apps.altitude.grabacion al " + " where "
+				+ " al.code = ph.code and " + " al.estado=?" + " order by "
+				+ " ph.code " + " asc";
+
+		try {
+
+			con = ds.getConnection();
+			ps = con.prepareStatement(QUERY_LISTADO_CAMPANAS);
+
+			ps.setInt(1, 2);
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				phCampaignBean = new PhCampaignBean();
+				phCampaignBean.setCode(rs.getInt(1));
+				phCampaignBean.setShortname(rs.getString(2));
+				phCampaignBean.setFullname(rs.getString(3));
+				phCampaignBean.setCampaigntype(rs.getShort(4));
+				phCampaignBean.setStatus(rs.getShort(5));
+				phCampaignBean.setForeseen_start(rs.getTimestamp(6));
+				phCampaignBean.setForeseen_start(rs.getTimestamp(7));
+				phCampaignBean.setForeseen_calls(rs.getInt(8));
+				phCampaignBean.setStart_time(rs.getTimestamp(9));
+				phCampaignBean.setEnd_time(rs.getTimestamp(10));
+
+				listaPhCampaignBean.add(phCampaignBean);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return listaPhCampaignBean;
+	}
+	public PhCampaignBean obtenerCampanaPorCodigo(int codigo) throws DatoException {
+		try {
+			String query = "select code, shortname, fullname, campaigntype, "
+					+ "status, foreseen_start, foreseen_end, foreseen_calls, start_time, end_time "
+					+ "from dbo.ph_campaign where code = ? order by shortname ";
+
+			con = ds.getConnection();
+			ps = con.prepareStatement(query);
+			ps.setInt(1, codigo);
+
+			rs = ps.executeQuery();
+			
+			PhCampaignBean campaign = null;
+			
+			while (rs.next()){
+				
+				campaign = new PhCampaignBean();
+				
+				int c = 1;
+				campaign.setCode(rs.getInt(c++));
+				campaign.setShortname(rs.getString(c++));
+				campaign.setFullname(rs.getString(c++));
+				campaign.setCampaigntype(rs.getShort(c++));
+				campaign.setStatus(rs.getShort(c++));
+				campaign.setForeseen_start(rs.getTimestamp(c++));
+				campaign.setForeseen_end(rs.getTimestamp(c++));
+				campaign.setForeseen_calls(rs.getInt(c++));
+				campaign.setStart_time(rs.getTimestamp(c++));
+				campaign.setEnd_time(rs.getTimestamp(c++));
+				
+			}
+			
+			return campaign;
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new DatoException("Al obtener la campaña por código", e);
+		} finally {
+			closeConexion();
+		}
+	}
+}

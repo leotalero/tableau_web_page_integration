@@ -1,0 +1,2419 @@
+package co.sistemcobro.altitude.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.all.util.Util;
+import co.sistemcobro.altitude.bean.CtAmacobraBean;
+import co.sistemcobro.altitude.bean.CtBancoagrarioBean;
+import co.sistemcobro.altitude.bean.CtBean;
+import co.sistemcobro.altitude.bean.CtClaro01Bean;
+import co.sistemcobro.altitude.bean.CtClaroadmBean;
+import co.sistemcobro.altitude.bean.CtClarocastigoBean;
+import co.sistemcobro.altitude.bean.CtClaromovilBean;
+import co.sistemcobro.altitude.bean.CtClaropersuBean;
+import co.sistemcobro.altitude.bean.CtClaropjuriBean;
+import co.sistemcobro.altitude.bean.CtClaropymeBean;
+import co.sistemcobro.altitude.bean.CtColsubsidioBean;
+import co.sistemcobro.altitude.bean.CtColsubsidioadBean;
+import co.sistemcobro.altitude.bean.CtColsubsidionotificacionBean;
+import co.sistemcobro.altitude.bean.CtCoomevaBean;
+import co.sistemcobro.altitude.bean.CtCoronaBean;
+import co.sistemcobro.altitude.bean.CtDaviviendaBean;
+import co.sistemcobro.altitude.bean.CtElEspectadorVentasBean;
+import co.sistemcobro.altitude.bean.CtEtbBean;
+import co.sistemcobro.altitude.bean.CtEtbventaBean;
+import co.sistemcobro.altitude.bean.CtLapolarBean;
+import co.sistemcobro.altitude.bean.CtMovistarBean;
+import co.sistemcobro.altitude.bean.CtMovistarmovilBean;
+import co.sistemcobro.altitude.bean.CtTelmexVentasBean;
+import co.sistemcobro.altitude.bean.CtTigoBean;
+import co.sistemcobro.altitude.bean.DialRuleBean;
+import co.sistemcobro.altitude.bean.HumanBean;
+import co.sistemcobro.altitude.bean.PhContactBean;
+import co.sistemcobro.altitude.bean.PhEUserBean;
+import co.sistemcobro.altitude.constante.AgendamientoTipoBusquedaEnum;
+import co.sistemcobro.altitude.constante.ContactStatusEnum;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class PhContactDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(PhContactDAO.class);
+
+	public PhContactDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	private static String SQL_PHCONTACT_INSERT = "insert into dbo.ph_contact " + "(code,campaign,status,priority,timezone,is_special,ntries_auto,ntries_manual,ntries_per_day) " + "values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+	private static String SQL_PHCONTACT_MAXCODE = "select max(code) from dbo.ph_contact ";
+
+	public Integer insertContactos(List<PhContactBean> contactos) throws DatoException {
+		Integer estatus = 0;
+		int c = 1;
+		int isgenerado = 0;
+		Integer maxcode = 0;
+		Integer maxintentos = 1000;
+		try {
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_PHCONTACT_MAXCODE.toString());
+			rs = ps.executeQuery();
+
+			if (rs.next()) {
+				maxcode = rs.getInt(1);
+			}
+
+			if (maxcode > 0) {
+				ps = con.prepareStatement(SQL_PHCONTACT_INSERT.toString());
+				for (PhContactBean contacto : contactos) {
+					isgenerado = 0;
+					int contadordeintentos = 0;
+					while (isgenerado <= 0) {
+						contacto.setCode(++maxcode);
+						c = 1;
+						isgenerado = 0;
+						ps.setInt(c++, contacto.getCode());
+						ps.setLong(c++, contacto.getCampaign());
+						ps.setShort(c++, contacto.getStatus());
+						ps.setShort(c++, contacto.getPriority());
+						ps.setInt(c++, contacto.getTimezone());
+						ps.setShort(c++, contacto.getIs_special());
+						ps.setLong(c++, contacto.getNtries_auto());
+						ps.setShort(c++, contacto.getNtries_auto());
+						ps.setShort(c++, contacto.getNtries_per_day());
+						isgenerado = ps.executeUpdate();
+						estatus = estatus + isgenerado;
+						contadordeintentos++;
+						if (contadordeintentos > maxintentos && isgenerado <= 0) {
+							throw new DatoException("Se alcanzó el máximo número de intentos [" + maxintentos + "] para crear un contacto en altitude.dbo.ph_contact");
+						}
+					}
+				}
+			} else {
+				throw new DatoException("No se pudo obtner el máximo código de altitude.dbo.ph_contact");
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return estatus;
+
+	}
+
+	public Integer asignarAgentes(List<CtBean> cts) throws DatoException {
+		Integer cantidad = 0;
+		int c = 1;
+		try {
+
+			String query = "update dbo.ph_contact set status=?, agent=? where code =? ";
+
+			con = ds.getConnection();
+			ps = con.prepareStatement(query.toString());
+
+			for (CtBean ct : cts) {
+				c = 1;
+				ps.setInt(c++, ct.getContact().getStatus());
+				ps.setInt(c++, ct.getContact().getAgent());
+				ps.setInt(c++, ct.getEasycode());
+				cantidad = cantidad + ps.executeUpdate();
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException("Al asignar los agentes", e);
+		} catch (Exception e) {
+			throw new DatoException("Al asignar los agentes", e);
+		} finally {
+			closeConexion();
+		}
+		return cantidad;
+	}
+
+	public Integer habilitarClientes(List<CtBean> cts, Boolean actualizarAgent, Boolean actualizarMomment, Boolean actualizarDialRule, Boolean actualizarPriority) throws DatoException {
+
+		logger.info("size:" + cts.size());
+
+		Integer cantidad = 0;
+		int c = 1;
+		try {
+
+			String query = "update dbo.ph_contact set status=?";
+			if (actualizarAgent) {
+				query += ", agent=? ";
+			}
+			if (actualizarMomment) {
+				query += ", moment=? ";
+			}
+			if (actualizarDialRule) {
+				query += ", dial_rule=? ";
+			}
+			if (actualizarPriority) {
+				query += ", priority=? ";
+			}
+			query += " where code =? ";
+
+			con = ds.getConnection();
+			ps = con.prepareStatement(query.toString());
+
+			for (CtBean ct : cts) {
+				c = 1;
+				ps.setInt(c++, ContactStatusEnum.STARTED.getIndex());
+
+				if (actualizarAgent) {
+					
+					if (null == ct.getContact().getAgent()) {
+						ps.setNull(c++, java.sql.Types.INTEGER);
+					} else {
+						ps.setInt(c++, ct.getContact().getAgent());
+					}
+
+				}
+				if (actualizarMomment) {
+					if (null == ct.getContact().getMoment()) {
+						ps.setNull(c++, java.sql.Types.TIMESTAMP);
+					} else {
+						ps.setTimestamp(c++, ct.getContact().getMoment());
+					}
+
+				}
+				if (actualizarDialRule) {
+					if (null == ct.getContact().getDial_rule()) {
+						ps.setNull(c++, java.sql.Types.INTEGER);
+					} else {
+						ps.setInt(c++, ct.getContact().getDial_rule());
+					}
+				}
+				if (actualizarPriority) {
+					if (null == ct.getContact().getPriority()) {
+						ps.setNull(c++, java.sql.Types.SMALLINT);
+					} else {
+						ps.setInt(c++, ct.getContact().getPriority());
+					}
+				}
+				ps.setInt(c++, ct.getEasycode());
+				cantidad = cantidad + ps.executeUpdate();
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return cantidad;
+	}
+
+	public Integer deshabilitaClientesPorEasycodes(List<CtBean> cts) throws DatoException {
+		Integer cantidad = 0;
+		int c = 1;
+		try {
+			StringBuffer q = new StringBuffer();
+			q.append("update dbo.ph_contact set status=? where code=?  ");
+
+			con = ds.getConnection();
+			ps = con.prepareStatement(q.toString());
+			for (CtBean ct : cts) {
+				c = 1;
+				ps.setInt(c++, ContactStatusEnum.DONE.getIndex());
+				ps.setInt(c++, ct.getEasycode());
+				cantidad = cantidad + ps.executeUpdate();
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return cantidad;
+	}
+
+	public List<CtBean> getEasyCodesNotDoneByCt(String campanaNombre) throws DatoException {
+		List<CtBean> cts = new ArrayList<CtBean>();
+		CtBean ct = null;
+		try {
+
+			StringBuffer q = new StringBuffer();		
+			q.append("select ct.easycode  ");
+			q.append("from altitude.dbo." + campanaNombre + " ct  ");
+			q.append("inner join altitude.dbo.ph_contact c on c.code = ct.easycode ");
+			q.append("where c.status<>? ");
+
+			logger.info(q.toString());
+			con = ds.getConnection();
+			ps = con.prepareStatement(q.toString());
+			ps.setInt(1, ContactStatusEnum.DONE.getIndex() );
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtBean();
+				ct.setEasycode(rs.getInt(c++));
+				cts.add(ct);
+			}
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return cts;
+	}
+
+	@Deprecated
+	public Integer deshabilitaClientesDeCampana(String campanaNombre) throws DatoException {
+		Integer cantidad = 0;
+		try {
+
+			String query = "update dbo.ph_contact set status=? where code in (select easycode from dbo." + campanaNombre + ")";
+			logger.debug(query);
+
+			con = ds.getConnection();
+			ps = con.prepareStatement(query.toString());
+			ps.setInt(1, ContactStatusEnum.DONE.getIndex());
+
+			cantidad = ps.executeUpdate();
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return cantidad;
+	}
+
+	public List<PhContactBean> buscarAgendamientosDavivienda(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtDaviviendaBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcedula, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtDaviviendaBean();
+				ct.setCtcedula(rs.getBigDecimal(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion", e);
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+
+	public List<PhContactBean> buscarAgendamientosClaropersu(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtClaropersuBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcuenta, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtClaropersuBean();
+				ct.setCtcuenta(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+
+	public List<PhContactBean> buscarAgendamientosClaro01(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtClaro01Bean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcuenta, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtClaro01Bean();
+				ct.setCtcuenta(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+
+	public List<PhContactBean> buscarAgendamientosClaropyme(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtClaropymeBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcuenta, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtClaropymeBean();
+				ct.setCtcuenta(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+
+	public List<PhContactBean> buscarAgendamientosLapolar(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtLapolarBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcedula, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtLapolarBean();
+				ct.setCtcedula(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+
+	public List<PhContactBean> buscarAgendamientosClaropjuri(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtClaropjuriBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcuenta, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtClaropjuriBean();
+				ct.setCtcuenta(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+	
+	public List<PhContactBean> buscarAgendamientosClarocastigo(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtClarocastigoBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcuenta, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtClarocastigoBean();
+				ct.setCtcuenta(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e);
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e);
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+
+	public List<PhContactBean> buscarAgendamientosClaroadm(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtClaroadmBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcuenta, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtClaroadmBean();
+				ct.setCtcuenta(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+	
+	public List<PhContactBean> buscarAgendamientosClaromovil(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtClaromovilBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctCedula, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtClaromovilBean();
+				ct.setCtcedula(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+
+	public List<PhContactBean> buscarAgendamientosColsubsidio(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtColsubsidioBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcedula, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtColsubsidioBean();
+				ct.setCtcedula(rs.getBigDecimal(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion", e);
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+
+	public List<PhContactBean> buscarAgendamientosColsubsidioad(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtColsubsidioadBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcedula, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtColsubsidioadBean();
+				ct.setCtcedula(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion", e);
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+	
+	public List<PhContactBean> buscarAgendamientosColsubsidionotificacion(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtColsubsidionotificacionBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcedula, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtColsubsidionotificacionBean();
+				ct.setCtcedula(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion", e);
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+	
+	public List<PhContactBean> buscarAgendamientosTelmexVentas(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtTelmexVentasBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ct_idcliente, ct_idbase, ct.easycode,ct.ct_cuenta, " + "r.name, c.moment, " + "u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo."
+					+ campanaNombre + " ct on ct.easycode = c.code " + "left join dbo.dial_rule  r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				ct = new CtTelmexVentasBean();
+				ct.setCt_idcliente(rs.getBigDecimal(1));
+				ct.setCt_idbase(rs.getBigDecimal(2));
+				ct.setEasycode(rs.getInt(3));
+				ct.setCt_cuenta(rs.getBigDecimal(4));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(5));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(6));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(7));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(8));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion", e);
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+
+	// /metodo para activar clientes en altitude para daviplata luego de
+	// respuesta de redeban
+	private static String SQL_AGENDAR_LLAMADA_CLIENTE_TICKET = "UPDATE" + " altitude.dbo.ph_contact " + " SET " + " status=?, priority=?, agent=? " + " WHERE " + " code in(" + "SELECT easycode FROM dbo.ct_daviplata_ds WHERE ct_idticket=" + "?" + "  )";
+
+	public Integer agendarLlamadaClienteALtitude(Integer ticketDetalle) {
+		Integer resultado = 0;
+
+		try {
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_AGENDAR_LLAMADA_CLIENTE_TICKET.toString());
+			int cont = 1;
+
+			ps.setInt(cont++, 0); // 0 = started, 3=done
+			ps.setInt(cont++, 75);
+			ps.setString(cont++, null);
+			ps.setInt(cont++, ticketDetalle);
+
+			resultado = ps.executeUpdate();
+
+			logger.info("agendo cliente para llamarlo a entregar respuestas generadas.");
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion", e);
+		} catch (Exception e) {
+			logger.error("Atrapó la excepcion", e);
+		} finally {
+			closeConexion();
+		}
+		return resultado;
+
+	}
+
+	// /metodo para activar clientes en altitude para daviplata luego de
+	// respuesta de redeban
+
+	public Integer agendarLlamadaClienteALtitude(Integer ticketDetalle, String nombrect, String agente) {
+		Integer resultado = 0;
+
+		try {
+
+			String SQL_AGENDAR_LLAMADA_CLIENTE_TICKET = "UPDATE" + " altitude.dbo.ph_contact " + " SET " + " status=?, priority=?, agent=? " + " WHERE " + " code in(" + "SELECT easycode FROM dbo." + nombrect + " WHERE ct_idticket=" + "?" + "  )";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_AGENDAR_LLAMADA_CLIENTE_TICKET.toString());
+			int cont = 1;
+
+			ps.setInt(cont++, 0); // 0 = started, 3=done
+			ps.setInt(cont++, 75);
+			//ps.setString(cont++, null);
+			ps.setString(cont++, agente);
+			ps.setInt(cont++, ticketDetalle);
+
+			resultado = ps.executeUpdate();
+
+			//logger.info("agendo cliente para llamarlo a entregar respuestas generadas.");
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion", e);
+		} catch (Exception e) {
+			logger.error("Atrapó la excepcion", e);
+		} finally {
+			closeConexion();
+		}
+		return resultado;
+
+	}
+
+	// metodo para consultar los easycode por campaña, variable de busqueda y
+	// valores de busqueda
+	public List<CtBean> consultarEasycodeAltitude(String nombreCt, String variableBusqueda, String valoresBusqueda) {
+		List<CtBean> cts = new ArrayList<CtBean>();
+
+		CtBean ct = null;
+
+		String SQL_CONSULTAR_EASYCODE_POR_IDTICKET = "SELECT " + " easycode FROM dbo." + nombreCt + " WHERE " + variableBusqueda + " in (" + valoresBusqueda + ")";
+
+		try {
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_CONSULTAR_EASYCODE_POR_IDTICKET.toString());
+
+			// logger.info("SQL_CONSULTAR_EASYCODE_POR_IDTICKET: "+SQL_CONSULTAR_EASYCODE_POR_IDTICKET);
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				int cont = 1;
+				ct = new CtBean();
+				ct.setEasycode(rs.getInt(cont++));
+
+				cts.add(ct);
+			}
+
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion", e);
+		} catch (Exception e) {
+			logger.error("Atrapó la excepcion", e);
+		} finally {
+			closeConexion();
+		}
+		return cts;
+
+	}
+
+	/**
+	 * Consulta los clientes que tengan agendamiento en un rando de fechas
+	 * 
+	 * @param campanaNombre
+	 * @param desde
+	 * @param hasta
+	 * @param usernamealtitude
+	 * @param valor
+	 * @param tipobusqueda
+	 * @return
+	 */
+	public List<PhContactBean> buscarAgendamientosCoomeva(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtCoomevaBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcedula, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112)";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtCoomevaBean();
+				ct.setCtcedula(rs.getBigDecimal(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion en buscarAgendamientosCoomeva SQLEX: ", e);
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+	}
+
+	/**
+	 * Consulta los clientes que tengan agendamiento en un rando de fechas
+	 * 
+	 * @param campanaNombre
+	 * @param desde
+	 * @param hasta
+	 * @param usernamealtitude
+	 * @param valor
+	 * @param tipobusqueda
+	 * @return
+	 */
+	public List<PhContactBean> buscarAgendamientosBancoagrario(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtBancoagrarioBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcedula, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112)";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtBancoagrarioBean();
+				ct.setCtcedula(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion en buscarAgendamientosBancoagrario SQLEX: ", e);
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+	}
+
+	/**
+	 * Consulta los clientes que tengan agendamiento en un rando de fechas
+	 * 
+	 * @param campanaNombre
+	 * @param desde
+	 * @param hasta
+	 * @param usernamealtitude
+	 * @param valor
+	 * @param tipobusqueda
+	 * @return
+	 */
+	public List<PhContactBean> buscarAgendamientosEtb(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtEtbBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ct_cedula, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112)";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtEtbBean();
+				ct.setCtcedula(rs.getBigDecimal(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion en buscarAgendamientosEtb SQLEX: ", e);
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+	}
+
+	/**
+	 * Consulta los clientes que tengan agendamiento en un rando de fechas para
+	 * el espectador ventas
+	 * 
+	 * @param campanaNombre
+	 * @param desde
+	 * @param hasta
+	 * @param usernamealtitude
+	 * @param valor
+	 * @param tipobusqueda
+	 * @return
+	 */
+	public List<PhContactBean> buscarAgendamientosElEspectadorVentas(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtElEspectadorVentasBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ct_cedula, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112)";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtElEspectadorVentasBean();
+				ct.setCtcedula(rs.getBigDecimal(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion en buscarAgendamientosElEspectadorVentas SQLEX: ", e);
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+	}
+
+	/**
+	 * Consulta los clientes que tengan agendamiento en un rando de fechas para
+	 * el movistar
+	 * 
+	 * @param campanaNombre
+	 * @param desde
+	 * @param hasta
+	 * @param usernamealtitude
+	 * @param valor
+	 * @param tipobusqueda
+	 * @return
+	 */
+	public List<PhContactBean> buscarAgendamientosMovistar(String campanaNombre, Calendar desde, Calendar hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtMovistarBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ct_cuenta, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + Util.calendarToString(desde, "yyyyMMdd", Locale.getDefault()) + "',112) "
+									 + "and c.moment < DATEADD(day, 1, convert(datetime,'" + Util.calendarToString(hasta, "yyyyMMdd", Locale.getDefault()) + "',112)) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + Util.calendarToString(desde, "yyyyMMdd", Locale.getDefault()) + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtMovistarBean();
+				ct.setCtcuenta(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion en buscarAgendamientosMovistar SQLEX: ", e);
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+	}
+	
+	/**
+	 * Consulta los clientes que tengan agendamiento en un rando de fechas para
+	 * el movistar
+	 * 
+	 * @param campanaNombre
+	 * @param desde
+	 * @param hasta
+	 * @param usernamealtitude
+	 * @param valor
+	 * @param tipobusqueda
+	 * @return
+	 */
+	public List<PhContactBean> buscarAgendamientosNatura(String campanaNombre, Calendar desde, Calendar hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtMovistarBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ct_cuenta, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + Util.calendarToString(desde, "yyyyMMdd", Locale.getDefault()) + "',112) "
+									 + "and c.moment < DATEADD(day, 1, convert(datetime,'" + Util.calendarToString(hasta, "yyyyMMdd", Locale.getDefault()) + "',112)) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + Util.calendarToString(desde, "yyyyMMdd", Locale.getDefault()) + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtMovistarBean();
+				ct.setCtcuenta(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion en buscarAgendamientosNatura SQLEX: ", e);
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+	}
+	
+	/**
+	 * Consulta los clientes que tengan agendamiento en un rando de fechas para
+	 * el movistar
+	 * 
+	 * @param campanaNombre
+	 * @param desde
+	 * @param hasta
+	 * @param usernamealtitude
+	 * @param valor
+	 * @param tipobusqueda
+	 * @return
+	 */
+	public List<PhContactBean> buscarAgendamientosAmazonascobranza(String campanaNombre, Calendar desde, Calendar hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtAmacobraBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcedula, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + Util.calendarToString(desde, "yyyyMMdd", Locale.getDefault()) + "',112) "
+									 + "and c.moment < DATEADD(day, 1, convert(datetime,'" + Util.calendarToString(hasta, "yyyyMMdd", Locale.getDefault()) + "',112)) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + Util.calendarToString(desde, "yyyyMMdd", Locale.getDefault()) + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			logger.debug(SQL_REFERIDOS_BUSCAR);
+			
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtAmacobraBean();
+				ct.setCtcedula(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			logger.error("Atrapó la excepcion en buscarAgendamientosNatura SQLEX: ", e);
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+	}
+	
+	
+	public List<PhContactBean> buscarAgendamientosEtbventa(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtEtbventaBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctidcliente, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtEtbventaBean();
+				ct.setCtidcliente(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+	
+	
+	public List<PhContactBean> buscarAgendamientosMovistarmovil(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtMovistarmovilBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcuenta, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtMovistarmovilBean();
+				ct.setCtcuenta(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+	
+	public List<PhContactBean> buscarAgendamientosBelcorp(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtMovistarmovilBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcuenta, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtMovistarmovilBean();
+				ct.setCtcuenta(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+	
+	public List<PhContactBean> buscarAgendamientosPublicarVentas(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtMovistarmovilBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcuenta, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtMovistarmovilBean();
+				ct.setCtcuenta(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+	
+	public List<PhContactBean> buscarAgendamientosCorona(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtCoronaBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcuenta, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtCoronaBean();
+				ct.setCtcuenta(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+	
+	public List<PhContactBean> buscarAgendamientosColsubsidiocyd(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtMovistarmovilBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcuenta, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtMovistarmovilBean();
+				ct.setCtcuenta(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+	
+	public List<PhContactBean> buscarAgendamientosTigo(String campanaNombre, String desde, String hasta, String usernamealtitude, String valor, AgendamientoTipoBusquedaEnum tipobusqueda) throws DatoException {
+
+		List<PhContactBean> agendamientos = new ArrayList<PhContactBean>();
+		PhContactBean contact = null;
+		PhEUserBean user = null;
+		HumanBean human = null;
+		CtTigoBean ct = null;
+		DialRuleBean dialrule = null;
+
+		try {
+
+			String SQL_REFERIDOS_BUSCAR = "select ctcuenta, ct.easycode, " + "r.name, c.moment, u.usr_name, h.fullname " + "from dbo.ph_contact c " + "inner join dbo.ph_e_user u on c.agent= u.code " + "inner join dbo.human h on h.agent = u.code " + "inner join dbo." + campanaNombre
+					+ " ct on ct.easycode = c.code " + "left join dbo.dial_rule r on r.code = c.dial_rule " + "where c.dial_rule is not null " + "and c.moment is not null and c.status <> 3 ";
+
+			if (AgendamientoTipoBusquedaEnum.DESDE_HASTA.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) " + "and c.moment < convert(datetime,'" + Util.addDays("yyyyMMdd", hasta, 1) + "',112) ";
+			} else if (AgendamientoTipoBusquedaEnum.DESDE.getIndex() == tipobusqueda.getIndex()) {
+				SQL_REFERIDOS_BUSCAR += "and c.moment >= convert(datetime,'" + desde + "',112) ";
+			} else {
+				SQL_REFERIDOS_BUSCAR += "ct.easycode is null ";
+			}
+
+			if (null != usernamealtitude && usernamealtitude.length() > 0) {
+				SQL_REFERIDOS_BUSCAR += "and u.usr_name = '" + usernamealtitude + "' ";
+			}
+
+			SQL_REFERIDOS_BUSCAR += "order by c.moment asc ";
+			
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_REFERIDOS_BUSCAR.toString());
+
+			logger.info("Agendados "+SQL_REFERIDOS_BUSCAR);
+			
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				ct = new CtTigoBean();
+				ct.setCtcuenta(rs.getString(c++));
+				ct.setEasycode(rs.getInt(c++));
+
+				dialrule = new DialRuleBean();
+				dialrule.setName(rs.getString(c++));
+
+				contact = new PhContactBean();
+				contact.setMoment(rs.getTimestamp(c++));
+
+				user = new PhEUserBean();
+				user.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				user.setHuman(human);
+
+				contact.setCt(ct);
+				contact.setDialrule(dialrule);
+				contact.setUser(user);
+
+				agendamientos.add(contact);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return agendamientos;
+
+	}
+
+
+}

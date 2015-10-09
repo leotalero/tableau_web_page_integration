@@ -1,0 +1,622 @@
+package co.sistemcobro.altitude.dao;
+
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.constante.DatePartEnum;
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.all.util.Util;
+import co.sistemcobro.altitude.bean.Calculado;
+import co.sistemcobro.altitude.bean.HumanBean;
+import co.sistemcobro.altitude.bean.Logueo;
+import co.sistemcobro.altitude.bean.PhCampaignBean;
+import co.sistemcobro.altitude.bean.PhEUserBean;
+import co.sistemcobro.apps.bean.Datepart;
+import co.sistemcobro.apps.bean.Origin;
+import co.sistemcobro.apps.bean.TerminationStatus;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class CalculadoDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(CalculadoDAO.class);
+
+	public enum FrecuenciaEnum {
+		DIA(8), MES(6), ANIO(4);
+		public static final Map<Integer, FrecuenciaEnum> mapByID = new HashMap<Integer, FrecuenciaEnum>();
+		public static final Map<String, FrecuenciaEnum> mapByNAME = new HashMap<String, FrecuenciaEnum>();
+
+		static {
+			for (FrecuenciaEnum s : EnumSet.allOf(FrecuenciaEnum.class)) {
+				mapByID.put(s.getIndex(), s);
+				mapByNAME.put(s.name(), s);
+			}
+		}
+
+		private int index;
+
+		FrecuenciaEnum(int index) {
+			this.index = index;
+		}
+
+		public int getIndex() {
+			return index;
+		}
+
+		public String getIndexString() {
+			return String.valueOf(index);
+		}
+
+		public static FrecuenciaEnum get(int id) {
+			return mapByID.get(id);
+		}
+
+		public static FrecuenciaEnum get(String name) {
+			return mapByNAME.get(name);
+		}
+
+	}
+
+	public CalculadoDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<Calculado> getLlamadasPorCampana(Calendar desde, Calendar hasta, Integer idcampana, FrecuenciaEnum periodo) throws DatoException {
+		List<Calculado> lista = new ArrayList<Calculado>();
+		Calculado calculado = null;
+		PhCampaignBean campaign = null;
+		Origin origin = null;
+		TerminationStatus terminationstatus = null;
+		try {
+			con = ds.getConnection();
+
+			Calendar desde_tmp = Calendar.getInstance();
+			desde_tmp.setTime(desde.getTime());
+			String idperiodo = "";
+			String dia_rotulo = "";
+			String dia_rotulo_max = "";
+			String decode = "";
+			int intervalo = 0;
+
+			while (desde_tmp.before(hasta)) {
+				// String idperiodo = formatoDIA.format(fechaNac.getTime());
+				idperiodo = "";
+				if (periodo.getIndex() == FrecuenciaEnum.DIA.getIndex()) {
+					intervalo++;
+					idperiodo = Util.calendarToString(desde_tmp, "yyyyMMdd", Locale.getDefault());
+					desde_tmp.add(Calendar.DAY_OF_MONTH, 1);
+
+				} else if (periodo.getIndex() == FrecuenciaEnum.MES.getIndex()) {
+					intervalo++;
+					idperiodo = Util.calendarToString(desde_tmp, "yyyyMM", Locale.getDefault());
+					desde_tmp.add(Calendar.MONTH, 1);
+
+				} else if (periodo.getIndex() == FrecuenciaEnum.ANIO.getIndex()) {
+					intervalo++;
+					idperiodo = Util.calendarToString(desde_tmp, "yyyy", Locale.getDefault());
+					desde_tmp.add(Calendar.YEAR, 1);
+
+				} else {
+					break;
+				}
+				dia_rotulo += ", P_" + idperiodo;
+				dia_rotulo_max += ", SUM (P_" + idperiodo + ") AS P_" + idperiodo;
+				decode += ", CASE WHEN t.fecha='" + idperiodo + "' THEN datos ELSE 0 END AS P_" + idperiodo;
+
+				// System.out.println("Desde: "
+				// + Util.calendarToString(desde_tmp, "yyyyMMdd",
+				// Locale.getDefault()));
+
+			}
+
+			if (periodo.getIndex() == FrecuenciaEnum.DIA.getIndex()) {
+				intervalo++;
+				idperiodo = "";
+				idperiodo = Util.calendarToString(desde_tmp, "yyyyMMdd", Locale.getDefault());
+				dia_rotulo += ", P_" + idperiodo;
+				dia_rotulo_max += ", SUM (P_" + idperiodo + ") AS P_" + idperiodo;
+				decode += ", CASE WHEN t.fecha='" + idperiodo + "' THEN datos ELSE 0 END AS P_" + idperiodo;
+			} else if (periodo.getIndex() == FrecuenciaEnum.MES.getIndex()) {
+				if (desde.get(Calendar.DAY_OF_MONTH) >= hasta.get(Calendar.DAY_OF_MONTH)) {
+					intervalo++;
+					idperiodo = "";
+					idperiodo = Util.calendarToString(desde_tmp, "yyyyMM", Locale.getDefault());
+					dia_rotulo += ", P_" + idperiodo;
+					dia_rotulo_max += ", SUM (P_" + idperiodo + ") AS P_" + idperiodo;
+					decode += ", CASE WHEN t.fecha='" + idperiodo + "' THEN datos ELSE 0 END AS P_" + idperiodo;
+				}
+			} else if (periodo.getIndex() == FrecuenciaEnum.ANIO.getIndex()) {
+				if ((desde.get(Calendar.MONTH) >= hasta.get(Calendar.MONTH) && desde.get(Calendar.DAY_OF_MONTH) >= hasta.get(Calendar.DAY_OF_MONTH)) || intervalo == 0) {
+					intervalo++;
+					idperiodo = "";
+					idperiodo = Util.calendarToString(desde_tmp, "yyyy", Locale.getDefault());
+					dia_rotulo += ", P_" + idperiodo;
+					dia_rotulo_max += ", SUM (P_" + idperiodo + ") AS P_" + idperiodo;
+					decode += ", CASE WHEN t.fecha='" + idperiodo + "' THEN datos ELSE 0 END AS P_" + idperiodo;
+				}
+			}
+
+			StringBuilder q = new StringBuilder();
+			q.append(" select f.campaign, c.shortname,f.origin,o.nombre, f.termination_status, t.nombre ");
+			q.append(dia_rotulo);
+			q.append(" from (  ");
+			q.append(" select m.campaign,m.origin,m.termination_status  ");
+			q.append(dia_rotulo_max);
+			q.append(" FROM ( ");
+			q.append(" select t.campaign,t.origin,t.termination_status  ");
+			q.append(decode);
+			q.append(" FROM ( select convert(nvarchar(" + periodo.getIndex() + "),th.start_time,112) as fecha, dc.campaign, th.origin, thr.termination_status, count(thr.termination_status) as datos ");
+			q.append(" from dbo.data_context dc  ");
+			q.append(" inner join dbo.thread th on th.data_context = dc.code  ");
+			q.append(" inner join dbo.call_thread thr on thr.code=th.code  ");
+			q.append(" where dc.campaign in (" + idcampana + ")  ");
+			q.append(" and th.start_time >= convert(datetime,?,112)  ");
+			q.append(" and th.start_time < DATEADD(day, 1, convert(datetime,?,112)) ");
+			q.append(" group by convert(nvarchar(" + periodo.getIndex() + "),th.start_time,112),  dc.campaign, th.origin, thr.termination_status) as t) as m ");
+			q.append(" group by m.campaign,m.origin,m.termination_status ) as f ");
+			q.append(" inner join dbo.ph_campaign c on c.code=f.campaign ");
+			q.append(" left join apps.altitude.origin o on o.idorigin=f.origin ");
+			q.append(" left join apps.altitude.termination_status t on t.idterminationstatus=f.termination_status ");
+			q.append(" order by f.campaign, f.origin, f.termination_status ");
+
+			logger.info("QUERY REPORTE: " + q);
+
+			ps = con.prepareStatement(q.toString());
+
+			ps.setString(1, Util.calendarToString(desde, "yyyyMMdd", Locale.getDefault()));
+			ps.setString(2, Util.calendarToString(hasta, "yyyyMMdd", Locale.getDefault()));
+
+			rs = ps.executeQuery();
+
+			logger.info("Reporte diario> fecha inicio:" + desde.getTime() + " , fechafin:" + hasta.getTime() + " , dias:" + intervalo);
+			int t = 1;
+			while (rs.next()) {
+				t = 1;
+
+				campaign = new PhCampaignBean();
+				campaign.setCode(rs.getInt(t++));
+				campaign.setShortname(rs.getString(t++));
+
+				origin = new Origin();
+				origin.setIdorigin(rs.getInt(t++));
+				origin.setNombre(rs.getString(t++));
+
+				terminationstatus = new TerminationStatus();
+				terminationstatus.setIdterminationstatus(rs.getInt(t++));
+				terminationstatus.setNombre(rs.getString(t++));
+
+				calculado = new Calculado();
+
+				List<BigDecimal> valores = new ArrayList<BigDecimal>();
+				for (int i = 0; i < intervalo; i++) {
+					valores.add(rs.getBigDecimal(t++));
+				}
+				calculado.setValores(valores);
+				calculado.setCampaign(campaign);
+				calculado.setOrigin(origin);
+				calculado.setTerminationstatus(terminationstatus);
+				lista.add(calculado);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString(), e.getCause());
+		} catch (Exception e) {
+			throw new DatoException(e.toString(), e.getCause());
+		} finally {
+			closeConexion();
+		}
+		return lista;
+	}
+
+	@SuppressWarnings("unused")
+	public List<Calculado> getLlamadasPatrones(Calendar desde, Calendar hasta, List<Datepart> patrones, Integer idcampana, DatePartEnum datepart) {
+		List<Calculado> lista = new ArrayList<Calculado>();
+		Calculado calculado = null;
+		PhCampaignBean campaign = null;
+		Origin origin = null;
+		TerminationStatus terminationstatus = null;
+
+		try {
+			con = ds.getConnection();
+
+			Calendar desde_tmp = Calendar.getInstance();
+			desde_tmp.setTime(desde.getTime());
+			String iddato = "";
+			String dato_rotulo = "";
+			String dato_rotulo_max = "";
+			String decode = "";
+
+			for (Datepart patron : patrones) {
+				iddato = String.valueOf(patron.getValor());
+				dato_rotulo += ", P_" + iddato;
+				dato_rotulo_max += ", SUM (P_" + iddato + ") AS P_" + iddato;
+				decode += ", CASE WHEN t.dato='" + iddato + "' THEN datos ELSE 0 END AS P_" + iddato;
+
+			}
+
+			StringBuilder q = new StringBuilder();
+			q.append(" select f.campaign, c.shortname,f.origin,o.nombre, f.termination_status, t.nombre ");
+			q.append(dato_rotulo);
+			q.append(" from (  ");
+			q.append(" select m.campaign,m.origin,m.termination_status  ");
+			q.append(dato_rotulo_max);
+			q.append(" FROM ( ");
+			q.append(" select t.campaign,t.origin,t.termination_status  ");
+			q.append(decode);
+			q.append(" FROM ( select DATEPART(" + datepart.getIndex() + ",th.start_time) as dato, dc.campaign, th.origin, thr.termination_status, count(thr.termination_status) as datos ");
+			q.append(" from dbo.data_context dc  ");
+			q.append(" inner join dbo.thread th on th.data_context = dc.code  ");
+			q.append(" inner join dbo.call_thread thr on thr.code=th.code  ");
+			q.append(" where dc.campaign in (" + idcampana + ")  ");
+			q.append(" and th.start_time >= convert(datetime,?,112)  ");
+			q.append(" and th.start_time < DATEADD(day, 1, convert(datetime,?,112)) ");
+			q.append(" group by DATEPART(" + datepart.getIndex() + ",th.start_time),  dc.campaign, th.origin, thr.termination_status) as t) as m ");
+			q.append(" group by m.campaign,m.origin,m.termination_status ) as f ");
+			q.append(" inner join dbo.ph_campaign c on c.code=f.campaign ");
+			q.append(" left join apps.altitude.origin o on o.idorigin=f.origin ");
+			q.append(" left join apps.altitude.termination_status t on t.idterminationstatus=f.termination_status ");
+			q.append(" order by f.campaign, f.origin, f.termination_status ");
+
+			logger.info("QUERY PATRONES: " + q);
+
+			ps = con.prepareStatement(q.toString());
+			ps.setString(1, Util.calendarToString(desde, "yyyyMMdd", Locale.getDefault()));
+			ps.setString(2, Util.calendarToString(hasta, "yyyyMMdd", Locale.getDefault()));
+
+			rs = ps.executeQuery();
+
+			logger.info("Reporte diario> fecha inicio:" + desde.getTime() + " , fechafin:" + hasta.getTime());
+			int t = 1;
+			while (rs.next()) {
+				t = 1;
+
+				campaign = new PhCampaignBean();
+				campaign.setCode(rs.getInt(t++));
+				campaign.setShortname(rs.getString(t++));
+
+				origin = new Origin();
+				origin.setIdorigin(rs.getInt(t++));
+				origin.setNombre(rs.getString(t++));
+
+				terminationstatus = new TerminationStatus();
+				terminationstatus.setIdterminationstatus(rs.getInt(t++));
+				terminationstatus.setNombre(rs.getString(t++));
+
+				calculado = new Calculado();
+
+				List<BigDecimal> valores = new ArrayList<BigDecimal>();
+				for (Datepart p : patrones) {
+					valores.add(rs.getBigDecimal(t++));
+				}
+
+				calculado.setValores(valores);
+				calculado.setCampaign(campaign);
+				calculado.setOrigin(origin);
+				calculado.setTerminationstatus(terminationstatus);
+				lista.add(calculado);
+			}
+
+		} catch (Exception e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return lista;
+	}
+
+	public List<Logueo> getLogueoIndicadores(Integer idcampana, Calendar fecha) {
+
+		List<Logueo> logueos = new ArrayList<Logueo>();
+		Logueo logueo = null;
+		PhEUserBean usuario = null;
+		HumanBean human = null;
+		PhCampaignBean campaign = null;
+		try {
+
+			StringBuilder q = new StringBuilder();
+
+			q.append("select t.CAMPANA_CODE, t.CAMPANA_NOMBRE, t.ASESOR_CODE, t.ASESOR_LOGIN, t.ASESOR_NOMBRE, ");
+			q.append("convert(datetime,t.FECHA_GESTION,112) as FECHA_GESTION, t.INICIO_CONEXION, t.FIN_CONEXION, t.TIEMPO_CONEXION_PERSONAL, t.TIEMPO_DISPONIBLE, (t.TIEMPO_CONEXION_PERSONAL-t.TIEMPO_DISPONIBLE) as TIEMPO_AUX, ");
+			q.append("t.TIEMPO_ACD, t.TIEMPO_ACW, t.TIEMPO_HOLD, t.TIEMPO_ACD_AVG, ");
+			q.append("t.LLAMADAS_OUT_NO_CONTESTADA, t.LLAMADAS_OUT_CONTESTADA, ");
+			q.append("t.LLAMADAS_IN_NO_CONTESTADA, t.LLAMADAS_IN_CONTESTADA ");
+			q.append(" from  ");
+			q.append("(select  ");
+			q.append("p.CAMPANA_CODE as CAMPANA_CODE, ");
+			q.append("p.CAMPANA_NOMBRE as CAMPANA_NOMBRE, ");
+			q.append("p.ASESOR_CODE as ASESOR_CODE,   ");
+			q.append("p.ASESOR_LOGIN as ASESOR_LOGIN,   ");
+			q.append("p.ASESOR_NOMBRE as ASESOR_NOMBRE,   ");
+			q.append("p.FECHA_GESTION as FECHA_GESTION, ");
+			q.append("(SELECT min(start_time) ");
+			q.append("FROM  ag_in_cp_log ");
+			q.append("WHERE agent = p.IDAGENT and campaign = p.IDCAMPANA ");
+			q.append("and convert(nvarchar,start_time,112) = p.FECHA_GESTION) as INICIO_CONEXION, ");
+			q.append("(SELECT max(DATEADD(second, (isnull(duration, DATEDIFF(second,start_time,getdate())*10))/10,start_time)) ");
+			q.append("FROM  ag_in_cp_log ");
+			q.append("WHERE agent = p.IDAGENT and campaign = p.IDCAMPANA ");
+			q.append("and convert(nvarchar,start_time,112) = p.FECHA_GESTION) as FIN_CONEXION, ");
+			q.append("isnull((SELECT sum(isnull(duration, DATEDIFF(second,start_time,getdate())*10))/10 ");
+			q.append("FROM  ag_in_cp_log ");
+			q.append("WHERE op_type = 0 and agent = p.IDAGENT and campaign = p.IDCAMPANA ");
+			q.append("and convert(nvarchar,start_time,112) = p.FECHA_GESTION),0) as TIEMPO_CONEXION_PERSONAL, ");
+			q.append("isnull((SELECT sum(isnull(duration, DATEDIFF(second,start_time,getdate())*10))/10 ");
+			q.append("FROM  ag_in_cp_log ");
+			q.append("WHERE op_type = 1 and agent = p.IDAGENT and campaign = p.IDCAMPANA ");
+			q.append("and convert(nvarchar,start_time,112) = p.FECHA_GESTION),0) as TIEMPO_DISPONIBLE, ");
+			q.append("isnull((select  sum(s.duration)/10  ");
+			q.append("from altitude.dbo.segment s ");
+			q.append("left join altitude.dbo.thread th on th.code = s.thread ");
+			q.append("left join altitude.dbo.data_context dc on dc.code = th.data_context ");
+			q.append("where s.e_user =p.IDAGENT and dc.campaign= p.IDCAMPANA ");
+			q.append("and s.state in (6,7) ");
+			q.append("and convert(nvarchar,s.start_time,112) = p.FECHA_GESTION),0) as TIEMPO_ACD, ");
+			q.append("isnull((select  sum(s.duration)/10  ");
+			q.append("from altitude.dbo.segment s ");
+			q.append("left join altitude.dbo.thread th on th.code = s.thread ");
+			q.append("left join altitude.dbo.data_context dc on dc.code = th.data_context ");
+			q.append("where s.e_user =p.IDAGENT and dc.campaign= p.IDCAMPANA ");
+			q.append("and s.state in (8) and s.extension is not null ");
+			q.append("and convert(nvarchar,s.start_time,112) = p.FECHA_GESTION),0) as TIEMPO_ACW, ");
+			q.append("isnull((select  sum(s.duration)/10 ");
+			q.append("from altitude.dbo.segment s ");
+			q.append("left join altitude.dbo.thread th on th.code = s.thread ");
+			q.append("left join altitude.dbo.data_context dc on dc.code = th.data_context ");
+			q.append("where s.e_user =p.IDAGENT and dc.campaign= p.IDCAMPANA ");
+			q.append("and s.state in (7)  ");
+			q.append("and convert(nvarchar,s.start_time,112) = p.FECHA_GESTION),0) as TIEMPO_HOLD, ");
+			q.append("isnull((select  avg(s.duration)/10  ");
+			q.append("from altitude.dbo.segment s ");
+			q.append("left join altitude.dbo.thread th on th.code = s.thread ");
+			q.append("left join altitude.dbo.data_context dc on dc.code = th.data_context ");
+			q.append("where s.e_user =p.IDAGENT and dc.campaign= p.IDCAMPANA ");
+			q.append("and s.state in (6,7) ");
+			q.append("and convert(nvarchar,s.start_time,112) = p.FECHA_GESTION),0) as TIEMPO_ACD_AVG, ");
+			q.append("isnull((select  count(thr.code) ");
+			q.append("from altitude.dbo.data_context dc ");
+			q.append("inner join altitude.dbo.thread th on th.data_context = dc.code ");
+			q.append("inner join altitude.dbo.call_thread thr on thr.code=th.code  ");
+			q.append("inner join altitude.dbo.data_transaction dt on dc.code = dt.data_context ");
+			q.append("where thr.termination_status<>1 and th.origin=2 ");
+			q.append("and dt.e_user =p.IDAGENT and dc.campaign= p.IDCAMPANA ");
+			q.append("and convert(nvarchar,dt.start_time,112) = p.FECHA_GESTION),0) as LLAMADAS_OUT_NO_CONTESTADA, ");
+			q.append("isnull((select  count(thr.code) ");
+			q.append("from altitude.dbo.data_context dc  ");
+			q.append("inner join altitude.dbo.thread th on th.data_context = dc.code ");
+			q.append("inner join altitude.dbo.call_thread thr on thr.code=th.code  ");
+			q.append("inner join altitude.dbo.data_transaction dt on dc.code = dt.data_context ");
+			q.append("where thr.termination_status=1 and th.origin=2 ");
+			q.append("and dt.e_user =p.IDAGENT and dc.campaign= p.IDCAMPANA ");
+			q.append("and convert(nvarchar,dt.start_time,112) = p.FECHA_GESTION),0) as LLAMADAS_OUT_CONTESTADA, ");
+			q.append("isnull((select  count(thr.code) ");
+			q.append("from altitude.dbo.data_context dc  ");
+			q.append("inner join altitude.dbo.thread th on th.data_context = dc.code ");
+			q.append("inner join altitude.dbo.call_thread thr on thr.code=th.code  ");
+			q.append("inner join altitude.dbo.data_transaction dt on dc.code = dt.data_context ");
+			q.append("where thr.termination_status<>1 and th.origin=1 ");
+			q.append("and dt.e_user =p.IDAGENT and dc.campaign= p.IDCAMPANA ");
+			q.append("and convert(nvarchar,dt.start_time,112) = p.FECHA_GESTION),0) as LLAMADAS_IN_NO_CONTESTADA, ");
+			q.append("isnull((select  count(thr.code) ");
+			q.append("from altitude.dbo.data_context dc  ");
+			q.append("inner join altitude.dbo.thread th on th.data_context = dc.code ");
+			q.append("inner join altitude.dbo.call_thread thr on thr.code=th.code  ");
+			q.append("inner join altitude.dbo.data_transaction dt on dc.code = dt.data_context ");
+			q.append("where thr.termination_status=1 and th.origin=1 ");
+			q.append("and dt.e_user =p.IDAGENT and dc.campaign= p.IDCAMPANA ");
+			q.append("and convert(nvarchar,dt.start_time,112) = p.FECHA_GESTION),0) as LLAMADAS_IN_CONTESTADA ");
+			q.append("from (SELECT distinct  ");
+			q.append("convert(nvarchar,l.start_time,112) as FECHA_GESTION, ");
+			q.append("l.campaign as CAMPANA_CODE,  ");
+			q.append("c.shortname as CAMPANA_NOMBRE,  ");
+			q.append("u.code as ASESOR_CODE,  ");
+			q.append("u.usr_name as ASESOR_LOGIN, ");
+			q.append("h.fullname as ASESOR_NOMBRE, ");
+			q.append("l.agent as IDAGENT,  ");
+			q.append("l.campaign as IDCAMPANA ");
+			q.append("FROM  ag_in_cp_log l ");
+			q.append("left join altitude.dbo.ph_e_user u on u.code = l.agent ");
+			q.append("left join altitude.dbo.human h on u.code = h.agent ");
+			q.append("left join altitude.dbo.ph_campaign c on c.code=l.campaign ");
+			q.append("WHERE l.campaign in (?) ");
+			q.append("and convert(nvarchar,l.start_time,112) = ? ) p ) t ");
+			q.append("order by 2 desc ");
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(q.toString());
+			ps.setInt(1, idcampana);
+			ps.setString(2, Util.calendarToString(fecha, "yyyyMMdd", Locale.getDefault()));
+
+			rs = ps.executeQuery();
+
+			logger.info(q);
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				campaign = new PhCampaignBean();
+				campaign.setCode(rs.getInt(c++));
+				campaign.setShortname(rs.getString(c++));
+
+				usuario = new PhEUserBean();
+				usuario.setCode(rs.getInt(c++));
+				usuario.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+
+				human.setFullname(rs.getString(c++));
+
+				logueo = new Logueo();
+				logueo.setFechagestion(rs.getTimestamp(c++));
+				logueo.setConexioninicio(rs.getTimestamp(c++));
+				logueo.setConexionfin(rs.getTimestamp(c++));
+				logueo.setConexiontotal(rs.getInt(c++));
+				logueo.setConexiondisponible(rs.getInt(c++));
+				logueo.setConexionauxiliar(rs.getInt(c++));
+				logueo.setTiempoacd(rs.getInt(c++));
+				logueo.setTiempoacw(rs.getInt(c++));
+				logueo.setTiempohold(rs.getInt(c++));
+				logueo.setTiempoacdavg(rs.getBigDecimal(c++));
+				logueo.setLlamadaoutnoefectiva(rs.getInt(c++));
+				logueo.setLlamadaoutefectiva(rs.getInt(c++));
+				logueo.setLlamadainnoefectiva(rs.getInt(c++));
+				logueo.setLlamadainefectiva(rs.getInt(c++));
+
+				usuario.setHuman(human);
+				logueo.setUser(usuario);
+				logueo.setCampaign(campaign);
+				logueos.add(logueo);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return logueos;
+
+	}
+
+	public List<Logueo> getLogueo(String idcampanas, Calendar fecha) {
+
+		logger.info("idcampana:" + idcampanas + "fecha:" + fecha.getTime());
+
+		List<Logueo> logueos = new ArrayList<Logueo>();
+		Logueo logueo = null;
+		PhEUserBean usuario = null;
+		HumanBean human = null;
+		PhCampaignBean campaign = null;
+		try {
+
+			StringBuilder q = new StringBuilder();
+
+			q.append("select \r\n"
+					+ "t.CAMPANA_NOMBRE \r\n"
+					+ ",t.ASESOR_LOGIN \r\n"
+					+ ",t.ASESOR_NOMBRE\r\n"
+					+ ",convert(datetime,t.FECHA_GESTION,103) as FECHA_GESTION\r\n"
+					+ ",t.INICIO_CONEXION\r\n"
+					+ ",t.FIN_CONEXION  \r\n"
+					+ "from (\r\n"
+					+ "select  p.CAMPANA_CODE as CAMPANA_CODE \r\n"
+					+ ",p.CAMPANA_NOMBRE as CAMPANA_NOMBRE\r\n"
+					+ ",p.ASESOR_CODE as ASESOR_CODE   \r\n"
+					+ ",p.ASESOR_LOGIN as ASESOR_LOGIN   \r\n"
+					+ ",p.ASESOR_NOMBRE as ASESOR_NOMBRE  \r\n"
+					+ ",p.FECHA_GESTION as FECHA_GESTION  \r\n"
+					+ ",CASE when (SELECT min(lt5.start_time) \r\n"
+					+ "			FROM  ag_in_cp_log lt5 WITH (NOLOCK) \r\n"
+					+ "			WHERE lt5.agent = p.IDAGENT \r\n"
+					+ "			and lt5.campaign = p.IDCAMPANA \r\n"
+					+ "			and convert(nvarchar(8),lt5.start_time,112) = convert(nvarchar(8),p.FECHA_GESTION,112)) IS NULL \r\n"
+					+ "	THEN p.FECHA_GESTION\r\n"
+					+ "	when   (SELECT min(lt4.start_time) \r\n"
+					+ "			FROM  ag_in_cp_log lt4 WITH (NOLOCK)  \r\n"
+					+ "			WHERE lt4.agent = p.IDAGENT \r\n"
+					+ "			and lt4.campaign = p.IDCAMPANA \r\n"
+					+ "			and convert(nvarchar(8),(dateadd(second, lt4.duration/10, lt4.start_time)),112) = convert(nvarchar(8),p.FECHA_GESTION,112) \r\n"
+					+ "			and convert(datetime,lt4.start_time,103) < p.FECHA_GESTION) IS NOT NULL \r\n"
+					+ "	THEN p.FECHA_GESTION	\r\n"
+					+ "	else (SELECT min(lt3.start_time) \r\n"
+					+ "			FROM  ag_in_cp_log lt3 WITH (NOLOCK)  \r\n"
+					+ "			WHERE lt3.agent = p.IDAGENT and lt3.campaign = p.IDCAMPANA \r\n"
+					+ "			and convert(nvarchar(8),lt3.start_time,112) = convert(nvarchar(8),p.FECHA_GESTION,112))\r\n"
+					+ "	END as INICIO_CONEXION\r\n"
+					+ ",CASE when (SELECT max(DATEADD(second, (isnull(lt2.duration, DATEDIFF(second,lt2.start_time,getdate())*10))/10,lt2.start_time)) \r\n"
+					+ "				FROM  ag_in_cp_log lt2 WITH (NOLOCK)  \r\n"
+					+ "				WHERE lt2.agent = p.IDAGENT \r\n"
+					+ "				and lt2.campaign = p.IDCAMPANA \r\n"
+					+ "				and (convert(nvarchar(8),lt2.start_time,112) <= p.FECHA_GESTION \r\n"
+					+ "				or convert(nvarchar(8),(dateadd(second, lt2.duration/10, lt2.start_time)),112) =  convert(nvarchar(8),p.FECHA_GESTION,112))) > dateadd(day,1, convert(datetime,p.FECHA_GESTION,103)) THEN dateadd(SECOND,86399, p.FECHA_GESTION)\r\n"
+					+ " when ((SELECT top (1)  cp.duration FROM  ag_in_cp_log cp  WITH (NOLOCK)  WHERE cp.op_type=0 and cp.agent = p.IDAGENT and cp.campaign = p.IDCAMPANA  and cp.start_time <= DATEADD(dd,1,p.FECHA_GESTION) order by cp.code desc ) is null) then null \r\n"
+					+ "	else (SELECT max(DATEADD(second, (isnull(lt1.duration, DATEDIFF(second,lt1.start_time,getdate())*10))/10,lt1.start_time)) \r\n"
+					+ "				FROM  ag_in_cp_log lt1 WITH (NOLOCK)  \r\n"
+					+ "				WHERE lt1.agent = p.IDAGENT \r\n"
+					+ "				and lt1.campaign = p.IDCAMPANA \r\n"
+					+ "				and (convert(nvarchar(8),lt1.start_time,112) = convert(nvarchar(8),p.FECHA_GESTION,112) or convert(nvarchar(8),(dateadd(second, lt1.duration/10, lt1.start_time)),112) = convert(nvarchar(8),p.FECHA_GESTION,112)))\r\n"
+					+ "	END as FIN_CONEXION\r\n"
+					+ "from (\r\n"
+					+ "SELECT \r\n"
+					+ "distinct  u.usr_name as ASESOR_LOGIN \r\n"
+					+ ",CONVERT(datetime, ?, 112) as FECHA_GESTION\r\n"
+					+ ",l.campaign as CAMPANA_CODE\r\n"
+					+ ",c.shortname as CAMPANA_NOMBRE\r\n"
+					+ ",u.code as ASESOR_CODE\r\n"
+					+ ",h.fullname as ASESOR_NOMBRE\r\n"
+					+ ",l.agent as IDAGENT  \r\n"
+					+ ",l.campaign as IDCAMPANA FROM  ag_in_cp_log l WITH (NOLOCK)  \r\n"
+					+ "left join altitude.dbo.ph_e_user u  WITH (NOLOCK) on u.code = l.agent \r\n"
+					+ "left join altitude.dbo.human h  WITH (NOLOCK) on u.code = h.agent \r\n"
+					+ "left join altitude.dbo.ph_campaign c  WITH (NOLOCK) on c.code=l.campaign \r\n"
+					+ "WHERE\r\n"
+					+ "l.campaign in ("
+					+ idcampanas
+					+ ") and \r\n"
+					+ "(\r\n"
+					+ "convert(nvarchar(8),(dateadd(second, l.duration/10, l.start_time)),112) = CONVERT(nvarchar(8), ?, 112) --Busca todos los registros que su fecha de inicio mas duración sean igual ha la Fecha de gestión\r\n"
+					+ "or convert(nvarchar(8),l.start_time,112) = CONVERT(nvarchar(8), ?, 112) --Busca todos los registros que su fecha de inicio sean igual ha la Fecha de gestión\r\n"
+					+ "or (dateadd(second, l.duration/10, l.start_time) >= CONVERT(datetime, ?, 112) and l.start_time < CONVERT(datetime, ?, 112)) --Busca todos los registros que su duracion este entre la Fecha de gestión\r\n"
+					+ "or (l.duration is null and l.start_time < dateadd(day,1,CONVERT(datetime, ?, 112)) and l.code = (select max(lt.code) from ag_in_cp_log lt  WITH (NOLOCK) where lt.op_type = 0  and lt.agent=l.agent  and lt.campaign = l.campaign and lt.start_time <  dateadd(day,1,CONVERT(datetime, ?, 112)))) --Busca todos los registros que no han terminado (excepto desconexiones) y que su fecha inicio sea menor a la de gestión \r\n"
+					+ ")\r\n" + ") p ) t ");
+
+			con = ds.getConnection();
+
+			logger.info(q);
+			logger.info(Util.calendarToString(fecha, "yyyyMMdd", Locale.getDefault()));
+
+			ps = con.prepareStatement(q.toString());
+			ps.setString(1, Util.calendarToString(fecha, "yyyyMMdd", Locale.getDefault()));
+			ps.setString(2, Util.calendarToString(fecha, "yyyyMMdd", Locale.getDefault()));
+			ps.setString(3, Util.calendarToString(fecha, "yyyyMMdd", Locale.getDefault()));
+			ps.setString(4, Util.calendarToString(fecha, "yyyyMMdd", Locale.getDefault()));
+			ps.setString(5, Util.calendarToString(fecha, "yyyyMMdd", Locale.getDefault()));
+			ps.setString(6, Util.calendarToString(fecha, "yyyyMMdd", Locale.getDefault()));
+			ps.setString(7, Util.calendarToString(fecha, "yyyyMMdd", Locale.getDefault()));
+
+			rs = ps.executeQuery();
+
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				campaign = new PhCampaignBean();
+				campaign.setShortname(rs.getString(c++));
+
+				usuario = new PhEUserBean();
+				usuario.setUsr_name(rs.getString(c++));
+
+				human = new HumanBean();
+				human.setFullname(rs.getString(c++));
+
+				logueo = new Logueo();
+				logueo.setFechagestion(rs.getTimestamp(c++));
+				logueo.setConexioninicio(rs.getTimestamp(c++));
+				logueo.setConexionfin(rs.getTimestamp(c++));
+
+				usuario.setHuman(human);
+				logueo.setUser(usuario);
+				logueo.setCampaign(campaign);
+				logueos.add(logueo);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return logueos;
+
+	}
+}

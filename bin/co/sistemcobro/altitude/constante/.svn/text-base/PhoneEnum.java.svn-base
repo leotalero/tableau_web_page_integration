@@ -1,0 +1,48 @@
+package co.sistemcobro.altitude.constante;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
+public enum PhoneEnum {
+	otro_tel(1), casa(2), oficina(3), celular(4), default_(5), tel1(6), tel2(7), tel3(
+			8), tel4(9), tel5(10), tel6(11), tel7(12), tel8(13), tel9(14), tel10(
+			15), tel11(16), tel12(17), tel13(18), tel14(19), tel15(20), tel16(
+			21), tel17(22), tel18(23), tel19(24), tel20(25), tel21(26), tel22(
+			27), tel23(28), tel24(29), tel25(30), telefono1(31), telefono2(32), adicional1(
+			33), adicional2(34), telefono3(35), telefono4(36), telefono5(37), telefono6(
+			38), telefono7(39);
+
+	public static final Map<Integer, PhoneEnum> mapByID = new HashMap<Integer, PhoneEnum>();
+	public static final Map<String, PhoneEnum> mapByNAME = new HashMap<String, PhoneEnum>();
+
+	static {
+		for (PhoneEnum s : EnumSet.allOf(PhoneEnum.class)) {
+			mapByID.put(s.getIndex(), s);
+			mapByNAME.put(s.name(), s);
+		}
+	}
+
+	private int index;
+
+	PhoneEnum(int index) {
+		this.index = index;
+	}
+
+	public int getIndex() {
+		return index;
+	}
+
+	public String getIndexString() {
+		return String.valueOf(index);
+	}
+
+	public static PhoneEnum get(int id) {
+		return mapByID.get(id);
+	}
+
+	public static PhoneEnum get(String name) {
+		return mapByNAME.get(name);
+	}
+
+}

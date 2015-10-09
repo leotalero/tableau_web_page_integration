@@ -1,0 +1,95 @@
+package co.sistemcobro.altitude.bean;
+
+import java.util.List;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class DataContext {
+
+	private Integer code;
+	private Integer idcampaing;
+	private Integer idcontac;
+
+	private List<Thread> threads;
+	private List<DataTransaction> datatransactions;
+	private DataTransaction datatransaction;
+	private Thread thread;
+	private PhCampaignBean campaing;
+	private PhContactBean contac;
+
+	public Integer getCode() {
+		return code;
+	}
+
+	public void setCode(Integer code) {
+		this.code = code;
+	}
+
+	public Integer getIdcampaing() {
+		return idcampaing;
+	}
+
+	public void setIdcampaing(Integer idcampaing) {
+		this.idcampaing = idcampaing;
+	}
+
+	public Integer getIdcontac() {
+		return idcontac;
+	}
+
+	public void setIdcontac(Integer idcontac) {
+		this.idcontac = idcontac;
+	}
+
+	public List<Thread> getThreads() {
+		return threads;
+	}
+
+	public void setThreads(List<Thread> threads) {
+		this.threads = threads;
+	}
+
+	public PhCampaignBean getCampaing() {
+		return campaing;
+	}
+
+	public void setCampaing(PhCampaignBean campaing) {
+		this.campaing = campaing;
+	}
+
+	public PhContactBean getContac() {
+		return contac;
+	}
+
+	public void setContac(PhContactBean contac) {
+		this.contac = contac;
+	}
+
+	public List<DataTransaction> getDatatransactions() {
+		return datatransactions;
+	}
+
+	public void setDatatransactions(List<DataTransaction> datatransactions) {
+		this.datatransactions = datatransactions;
+	}
+
+	public DataTransaction getDatatransaction() {
+		return datatransaction;
+	}
+
+	public void setDatatransaction(DataTransaction datatransaction) {
+		this.datatransaction = datatransaction;
+	}
+
+	public Thread getThread() {
+		return thread;
+	}
+
+	public void setThread(Thread thread) {
+		this.thread = thread;
+	}
+
+}

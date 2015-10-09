@@ -1,0 +1,43 @@
+package co.sistemcobro.altitude.constante;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
+public enum ReporteTipoBusquedaEnum {
+	INDICADORES(1), LLAMADAS(2), PATRONES(3),LOGUEO(4);
+
+	public static final Map<Integer, ReporteTipoBusquedaEnum> mapByID = new HashMap<Integer, ReporteTipoBusquedaEnum>();
+	public static final Map<String, ReporteTipoBusquedaEnum> mapByNAME = new HashMap<String, ReporteTipoBusquedaEnum>();
+
+	static {
+		for (ReporteTipoBusquedaEnum s : EnumSet
+				.allOf(ReporteTipoBusquedaEnum.class)) {
+			mapByID.put(s.getIndex(), s);
+			mapByNAME.put(s.name(), s);
+		}
+	}
+
+	private int index;
+
+	ReporteTipoBusquedaEnum(int index) {
+		this.index = index;
+	}
+
+	public int getIndex() {
+		return index;
+	}
+
+	public String getIndexString() {
+		return String.valueOf(index);
+	}
+
+	public static ReporteTipoBusquedaEnum get(int id) {
+		return mapByID.get(id);
+	}
+
+	public static ReporteTipoBusquedaEnum get(String name) {
+		return mapByNAME.get(name);
+	}
+
+}

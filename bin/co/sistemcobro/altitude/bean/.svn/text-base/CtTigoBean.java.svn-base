@@ -1,0 +1,29 @@
+package co.sistemcobro.altitude.bean;
+
+/**
+ * 
+ * @version 1.0 - 19/02/2013
+ * @author (c)Sistemcobro.sas - Diego Armando Bravo Sanabria
+ */
+public class CtTigoBean extends CtBean {
+
+	private String ctcuenta;
+	private PhContactBean contacto;
+
+	public String getCtcuenta() {
+		return ctcuenta;
+	}
+
+	public void setCtcuenta(String ctcuenta) {
+		this.ctcuenta = ctcuenta;
+	}
+
+	public PhContactBean getContacto() {
+		return contacto;
+	}
+
+	public void setContacto(PhContactBean contacto) {
+		this.contacto = contacto;
+	}
+
+}

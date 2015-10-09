@@ -1,0 +1,208 @@
+package co.sistemcobro.constelacion.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.constante.EstadoEnum;
+import co.sistemcobro.constelacion.bean.CargueTipo;
+import co.sistemcobro.constelacion.bean.ClienteFiltro;
+import co.sistemcobro.constelacion.bean.Filtro;
+import co.sistemcobro.constelacion.bean.Proyecto;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Leonardo talero
+ * 
+ */
+public class TableauDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(TableauDAO.class);
+
+	public TableauDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	
+	
+	public List<ClienteFiltro> getClienteFiltroyIdproyecto(String codusuario,Long idproyecto) {
+		
+		String SQL_CARGUES_TIPOS = "select cf.idclientefiltro,cf.codusuario,cf.idproyecto,cf.idfiltro,cf.valor,"
+				+ "cf.idusuariocrea,cf.fechacrea,cf.idusuariomod,cf.fechamod,cf.estado,p.idproyecto,p.nombreproyecto,p.ref_tableau,f.idfiltro,f.nombrefiltro "
+				+ " from constelacion.cliente_filtro cf "
+				+ " inner join constelacion.proyecto p on cf.idproyecto=p.idproyecto  "
+				+ "  left join constelacion.filtro f on cf.idfiltro=f.idfiltro "
+				+ " where cf.codusuario=? and p.idproyecto=? and cf.estado=? ";
+		List<ClienteFiltro> clientefiltros = new ArrayList<ClienteFiltro>();
+		ClienteFiltro clientefiltro = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_CARGUES_TIPOS.toString());
+			ps.setString(1, codusuario);
+			ps.setLong(2, idproyecto);
+			ps.setInt(3, EstadoEnum.ACTIVO.getIndex());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				clientefiltro = new ClienteFiltro();
+				clientefiltro.setIdclientefiltro(rs.getLong(1));
+				clientefiltro.setCodusuario(rs.getString(2));
+				clientefiltro.setIdproyecto(rs.getLong(3));
+				clientefiltro.setIdfiltro(rs.getLong(4));
+				clientefiltro.setValor(rs.getString(5));
+				clientefiltro.setIdusuariocrea(rs.getInt(6));
+				clientefiltro.setFechacrea(rs.getTimestamp(7));
+				clientefiltro.setIdusuariomod(rs.getInt(8));
+				clientefiltro.setFechamod(rs.getTimestamp(9));
+				clientefiltro.setEstado(rs.getInt(10));
+				 Proyecto proyecto=new Proyecto();
+				 proyecto.setIdproyecto(rs.getLong(11));
+				 proyecto.setNombreproyecto(rs.getString(12));
+				 proyecto.setRef_tabeau(rs.getString(13));
+				 clientefiltro.setProyecto(proyecto);
+				 Filtro filtro=new Filtro();
+				 filtro.setIdfiltro(rs.getLong(14));
+				 filtro.setNombrefiltro(rs.getString(15));
+				 clientefiltro.setFiltro(filtro);
+				 
+				clientefiltros.add(clientefiltro);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return clientefiltros;
+
+	}
+public List<Proyecto> getProyectosporId(List<Long> idproyecto) {
+		
+		String SQL_CARGUES_TIPOS = "select p.idproyecto,p.nombreproyecto,p.ref_tableau  "
+				+ " from constelacion.proyecto p   "
+				//+ "  inner join constelacion.filtro f on cf.idfiltro=f.idfiltro "
+				+ " where p.idproyecto=? and p.estado=? ";
+		List<Proyecto> proyectos = new ArrayList<Proyecto>();
+		ClienteFiltro clientefiltro = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_CARGUES_TIPOS.toString());
+			
+			for(Long id:idproyecto){
+				ps.setLong(1, id);
+
+				ps.setInt(2, EstadoEnum.ACTIVO.getIndex());
+
+				rs = ps.executeQuery();
+
+				while (rs.next()) {
+
+					
+					 Proyecto proyecto=new Proyecto();
+					 proyecto.setIdproyecto(rs.getLong(1));
+					 proyecto.setNombreproyecto(rs.getString(2));
+					 proyecto.setRef_tabeau(rs.getString(3));
+					
+					 
+					proyectos.add(proyecto);
+				}
+			}
+			
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return proyectos;
+
+	}
+
+public List<Long> getProyectosporCodHermes(String codusuario) {
+	
+	String SQL_CARGUES_TIPOS = "select distinct idproyecto from constelacion.cliente_filtro where codusuario=? and estado=?  ";
+			
+	List<Long> proyectos = new ArrayList<Long>();
+	ClienteFiltro clientefiltro = null;
+
+	try {
+		con = ds.getConnection();
+		ps = con.prepareStatement(SQL_CARGUES_TIPOS.toString());
+		
+		
+			ps.setString(1, codusuario);
+
+			ps.setInt(2, EstadoEnum.ACTIVO.getIndex());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				
+				
+				Long idproyec=(rs.getLong(1));
+				
+				
+				 
+				proyectos.add(idproyec);
+			}
+		
+		
+
+	} catch (SQLException e) {
+		logger.error(e.toString(), e.fillInStackTrace());
+	} finally {
+		closeConexion();
+	}
+	return proyectos;
+
+}
+
+public List<Long> getAllProyectos() {
+	
+	String SQL_CARGUES_TIPOS = "select distinct idproyecto from constelacion.cliente_filtro where  estado=?  ";
+			
+	List<Long> proyectos = new ArrayList<Long>();
+	ClienteFiltro clientefiltro = null;
+
+	try {
+		con = ds.getConnection();
+		ps = con.prepareStatement(SQL_CARGUES_TIPOS.toString());
+		
+		
+			//ps.setString(1, codusuario);
+
+			ps.setInt(1, EstadoEnum.ACTIVO.getIndex());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				
+				
+				Long idproyec=(rs.getLong(1));
+				
+				
+				 
+				proyectos.add(idproyec);
+			}
+		
+		
+
+	} catch (SQLException e) {
+		logger.error(e.toString(), e.fillInStackTrace());
+	} finally {
+		closeConexion();
+	}
+	return proyectos;
+
+}
+}

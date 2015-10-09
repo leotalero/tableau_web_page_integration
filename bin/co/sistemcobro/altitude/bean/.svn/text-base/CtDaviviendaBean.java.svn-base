@@ -1,0 +1,30 @@
+package co.sistemcobro.altitude.bean;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+
+
+public class CtDaviviendaBean extends CtBean implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+	public CtDaviviendaBean() {
+
+	}
+
+	private BigDecimal ctcedula;
+	private PhContactBean contacto;
+
+	public BigDecimal getCtcedula() {
+		return ctcedula;
+	}
+	public void setCtcedula(BigDecimal ctcedula) {
+		this.ctcedula = ctcedula;
+	}
+	public PhContactBean getContacto() {
+		return contacto;
+	}
+	public void setContacto(PhContactBean contacto) {
+		this.contacto = contacto;
+	}
+	
+}

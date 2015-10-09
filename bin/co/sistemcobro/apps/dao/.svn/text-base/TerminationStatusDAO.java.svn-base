@@ -1,0 +1,62 @@
+package co.sistemcobro.apps.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.apps.bean.TerminationStatus;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class TerminationStatusDAO extends BaseDAO {
+
+	//private Logger logger = Logger.getLogger(TerminationStatusDAO.class);
+
+	public TerminationStatusDAO() {
+	}
+
+	public TerminationStatusDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<TerminationStatus> getTerminationsStatus() throws DatoException {
+
+		List<TerminationStatus> terminationsStatus = new ArrayList<TerminationStatus>();
+		TerminationStatus terminationStatus;
+
+		String queryDateparts = "select idterminationstatus, nombre, descripcion "
+				+ "from altitude.termination_status order by idterminationstatus asc ";
+
+		try {
+
+			con = ds.getConnection();
+			ps = con.prepareStatement(queryDateparts);
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				int cont = 1;
+				terminationStatus = new TerminationStatus();
+				terminationStatus.setIdterminationstatus(rs.getInt(cont++));
+				terminationStatus.setNombre(rs.getString(cont++));
+				terminationStatus.setDescripcion(rs.getString(cont++));
+				terminationsStatus.add(terminationStatus);
+			}
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return terminationsStatus;
+	}
+
+}

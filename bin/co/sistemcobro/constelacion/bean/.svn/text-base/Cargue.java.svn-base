@@ -1,0 +1,211 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package co.sistemcobro.constelacion.bean;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.Basic;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+
+/**
+ * 
+ * @author jhurtado
+ */
+@Entity
+@Table(name = "cargue")
+@XmlRootElement
+@NamedQueries({ @NamedQuery(name = "Cargue.findAll", query = "SELECT c FROM Cargue c") })
+public class Cargue implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	@Basic(optional = false)
+	@Column(name = "idcargue")
+	private Integer idcargue;
+
+	@Basic(optional = false)
+	@Column(name = "idbase")
+	private Integer idbase;
+
+	@Basic(optional = false)
+	@Column(name = "idcarguetipo")
+	private Integer idcarguetipo;
+
+	@Basic(optional = false)
+	@Column(name = "nombre")
+	private String nombre;
+	@Basic(optional = false)
+	@Column(name = "idusuariocrea")
+	private int idusuariocrea;
+	@Basic(optional = false)
+	@Column(name = "fechacrea")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date fechacrea;
+	@Basic(optional = false)
+	@Column(name = "estado")
+	private short estado;
+	@JoinColumn(name = "idbase", referencedColumnName = "idbase")
+	@ManyToOne(optional = false)
+	private Base base;
+	@JoinColumn(name = "idcarguetipo", referencedColumnName = "idcarguetipo")
+	@ManyToOne(optional = false)
+	private CargueTipo carguetipo;
+	private int registroscargados;
+	private int registroseliminados;
+	
+	//@OneToMany(cascade = CascadeType.ALL, mappedBy = "idcargue")
+	//private List<Obligacion> obligaciones;
+
+	public Cargue() {
+	}
+
+	public Cargue(Integer idcargue) {
+		this.idcargue = idcargue;
+	}
+
+	public Cargue(Integer idcargue, String nombre, int idusuariocrea,
+			Date fechacrea, short estado) {
+		this.idcargue = idcargue;
+		this.nombre = nombre;
+		this.idusuariocrea = idusuariocrea;
+		this.fechacrea = fechacrea;
+		this.estado = estado;
+	}
+
+	public Integer getIdbase() {
+		return idbase;
+	}
+
+	public void setIdbase(Integer idbase) {
+		this.idbase = idbase;
+	}
+
+	public Integer getIdcargue() {
+		return idcargue;
+	}
+
+	public void setIdcargue(Integer idcargue) {
+		this.idcargue = idcargue;
+	}
+
+	public String getNombre() {
+		return nombre;
+	}
+
+	public void setNombre(String nombre) {
+		this.nombre = nombre;
+	}
+
+	public int getIdusuariocrea() {
+		return idusuariocrea;
+	}
+
+	public void setIdusuariocrea(int idusuariocrea) {
+		this.idusuariocrea = idusuariocrea;
+	}
+
+	public Date getFechacrea() {
+		return fechacrea;
+	}
+
+	public void setFechacrea(Date fechacrea) {
+		this.fechacrea = fechacrea;
+	}
+
+	public short getEstado() {
+		return estado;
+	}
+
+	public void setEstado(short estado) {
+		this.estado = estado;
+	}
+
+	public Base getBase() {
+		return base;
+	}
+
+	public void setBase(Base base) {
+		this.base = base;
+	}
+
+	public Integer getIdcarguetipo() {
+		return idcarguetipo;
+	}
+
+	public void setIdcarguetipo(Integer idcarguetipo) {
+		this.idcarguetipo = idcarguetipo;
+	}
+
+	public CargueTipo getCarguetipo() {
+		return carguetipo;
+	}
+
+	public void setCarguetipo(CargueTipo carguetipo) {
+		this.carguetipo = carguetipo;
+	}
+	
+	public int getRegistroscargados() {
+		return registroscargados;
+	}
+
+	public void setRegistroscargados(int registroscargados) {
+		this.registroscargados = registroscargados;
+	}
+
+	@XmlTransient
+	@Override
+	public int hashCode() {
+		int hash = 0;
+		hash += (idcargue != null ? idcargue.hashCode() : 0);
+		return hash;
+	}
+
+	
+
+	public int getRegistroseliminados() {
+		return registroseliminados;
+	}
+
+	public void setRegistroseliminados(int registroseliminados) {
+		this.registroseliminados = registroseliminados;
+	}
+
+	@Override
+	public boolean equals(Object object) {
+		// TODO: Warning - this method won't work in the case the id fields are
+		// not set
+		if (!(object instanceof Cargue)) {
+			return false;
+		}
+		Cargue other = (Cargue) object;
+		if ((this.idcargue == null && other.idcargue != null)
+				|| (this.idcargue != null && !this.idcargue
+						.equals(other.idcargue))) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "colsubsidio.Cargue[ idcargue=" + idcargue + " ]";
+	}
+
+}

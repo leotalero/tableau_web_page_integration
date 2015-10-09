@@ -1,0 +1,94 @@
+package co.sistemcobro.altitude.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.altitude.bean.HumanBean;
+import co.sistemcobro.altitude.bean.PhEUserBean;
+import co.sistemcobro.altitude.constante.PhEUserTipoBusquedaEnum;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class PhEUserDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(PhEUserDAO.class);
+
+	public PhEUserDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<PhEUserBean> buscarUsuarios(String valor,
+			PhEUserTipoBusquedaEnum tipobusqueda) {
+
+		List<PhEUserBean> usuarios = new ArrayList<PhEUserBean>();
+		PhEUserBean usuario = null;
+		HumanBean human = null;
+
+		try {
+
+			String SQL_USUARIOS_BUSCAR = "select u.code, u.usr_name, u.type, u.active, u.default_permission, "
+					+ "h.fullname, h.default_extension, h.type, h.motd, h.ivacc_user "
+					+ "from altitude.dbo.ph_e_user u "
+					+ "left join altitude.dbo.human h on h.agent=u.code "
+					+ "where u.usr_name is not null ";
+
+			if (PhEUserTipoBusquedaEnum.NOMBRE.getIndex() == tipobusqueda
+					.getIndex()) {
+				SQL_USUARIOS_BUSCAR += "and h.fullname like '" + valor + "' ";
+			} else if (PhEUserTipoBusquedaEnum.CODUSUARIO.getIndex() == tipobusqueda
+					.getIndex()) {
+				SQL_USUARIOS_BUSCAR += "and u.code =  " + valor + " ";
+			} else if (PhEUserTipoBusquedaEnum.USUARIO.getIndex() == tipobusqueda
+					.getIndex()) {
+				SQL_USUARIOS_BUSCAR += "and u.usr_name like  '" + valor + "' ";
+			} else {
+				SQL_USUARIOS_BUSCAR += "and u.code is null ";
+			}
+
+			SQL_USUARIOS_BUSCAR += "order by u.usr_name desc  ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(SQL_USUARIOS_BUSCAR.toString());
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				usuario = new PhEUserBean();
+				usuario.setCode(rs.getInt(c++));
+				usuario.setUsr_name(rs.getString(c++));
+				usuario.setType(rs.getShort(c++));
+				usuario.setActive(rs.getShort(c++));
+				usuario.setDefault_permission(rs.getShort(c++));
+
+				human = new HumanBean();
+
+				human.setFullname(rs.getString(c++));
+				human.setDefault_extension(rs.getString(c++));
+				human.setType(rs.getShort(c++));
+				human.setMotd(rs.getString(c++));
+				human.setIvacc_user(rs.getInt(c++));
+
+				usuario.setHuman(human);
+
+				usuarios.add(usuario);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return usuarios;
+
+	}
+}

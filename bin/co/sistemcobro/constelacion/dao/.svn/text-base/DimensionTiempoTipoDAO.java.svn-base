@@ -1,0 +1,65 @@
+package co.sistemcobro.constelacion.dao;
+
+import java.math.BigInteger;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.constante.EstadoEnum;
+import co.sistemcobro.constelacion.bean.CargueTipo;
+import co.sistemcobro.constelacion.bean.DimensionArea;
+import co.sistemcobro.constelacion.bean.DimensionTiempoTipo;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class DimensionTiempoTipoDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(DimensionTiempoTipoDAO.class);
+
+	public DimensionTiempoTipoDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	private static String SQL_DIMENSION_TIEMPO_TIPO = "select iddimensiontiempotipo, nombretiempotipo, estado "
+			+ "from constelacion.dimension_tiempo_tipo where estado=? ";
+	
+	public List<DimensionTiempoTipo> getDimensionTiempoTipo() {
+
+		List<DimensionTiempoTipo> tiempotipos = new ArrayList<DimensionTiempoTipo>();
+		DimensionTiempoTipo tiempotipo = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_DIMENSION_TIEMPO_TIPO.toString());
+			ps.setInt(1, EstadoEnum.ACTIVO.getIndex());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				tiempotipo = new DimensionTiempoTipo();
+				
+				BigInteger iddimensiontiempotipo = new BigInteger(Integer.toString(rs.getInt(1)));
+				tiempotipo.setIddimensiontiempotipo(iddimensiontiempotipo);
+				tiempotipo.setNombretiempotipo(rs.getString(2));
+				tiempotipo.setEstado(rs.getShort(3));
+				tiempotipos.add(tiempotipo);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return tiempotipos;
+
+	}
+
+}

@@ -1,0 +1,36 @@
+package co.sistemcobro.apps.bean;
+
+public class TerminationStatus  {
+
+	private Integer idterminationstatus;
+	private String nombre;
+	private String descripcion;
+
+	public TerminationStatus() {
+	}
+
+	public Integer getIdterminationstatus() {
+		return idterminationstatus;
+	}
+
+	public void setIdterminationstatus(Integer idterminationstatus) {
+		this.idterminationstatus = idterminationstatus;
+	}
+
+	public String getNombre() {
+		return nombre;
+	}
+
+	public void setNombre(String nombre) {
+		this.nombre = nombre;
+	}
+
+	public String getDescripcion() {
+		return descripcion;
+	}
+
+	public void setDescripcion(String descripcion) {
+		this.descripcion = descripcion;
+	}
+
+}

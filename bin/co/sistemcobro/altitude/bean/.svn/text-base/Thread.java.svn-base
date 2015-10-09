@@ -1,0 +1,110 @@
+package co.sistemcobro.altitude.bean;
+
+import java.sql.Timestamp;
+
+import co.sistemcobro.apps.bean.Origin;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class Thread {
+
+	private Integer code;
+	private Integer thread_type;
+	private Integer data_context;
+	private Timestamp start_time;
+	private Short idorigin;
+	
+	private Long duracion;
+	private String extension;
+
+	private DataContext datacontext;
+	private Origin origin;
+
+	private CallThread callthread;
+
+	public Integer getCode() {
+		return code;
+	}
+
+	public void setCode(Integer code) {
+		this.code = code;
+	}
+
+	public Integer getThread_type() {
+		return thread_type;
+	}
+
+	public void setThread_type(Integer thread_type) {
+		this.thread_type = thread_type;
+	}
+
+	public Integer getData_context() {
+		return data_context;
+	}
+
+	public void setData_context(Integer data_context) {
+		this.data_context = data_context;
+	}
+
+	public Timestamp getStart_time() {
+		return start_time;
+	}
+
+	public void setStart_time(Timestamp start_time) {
+		this.start_time = start_time;
+	}
+
+	public Origin getOrigin() {
+		return origin;
+	}
+
+	public DataContext getDatacontext() {
+		return datacontext;
+	}
+
+	public void setDatacontext(DataContext datacontext) {
+		this.datacontext = datacontext;
+	}
+
+	public Short getIdorigin() {
+		return idorigin;
+	}
+
+	public void setIdorigin(Short idorigin) {
+		this.idorigin = idorigin;
+	}
+
+	public void setOrigin(Origin origin) {
+		this.origin = origin;
+	}
+
+	public CallThread getCallthread() {
+		return callthread;
+	}
+
+	public void setCallthread(CallThread callthread) {
+		this.callthread = callthread;
+	}
+
+	public Long getDuracion() {
+		return duracion;
+	}
+
+	public void setDuracion(Long duracion) {
+		this.duracion = duracion;
+	}
+
+	public String getExtension() {
+		return extension;
+	}
+
+	public void setExtension(String extension) {
+		this.extension = extension;
+	}
+	
+	
+
+}

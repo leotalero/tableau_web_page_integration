@@ -1,0 +1,32 @@
+package co.sistemcobro.constelacion.ejb;
+
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+
+public class BaseEJB {
+
+	@Resource(mappedName = "dc_constelacion")
+	protected DataSource dc_constelacion;
+
+	@Resource(mappedName = "dg_constelacion")
+	protected DataSource dg_constelacion;
+
+	@Resource(mappedName = "dc_altitude")
+	protected DataSource dc_altitude;
+
+	@Resource(mappedName = "dg_altitude")
+	protected DataSource dg_altitude;
+
+	@Resource(mappedName = "dc_hermes")
+	protected DataSource dc_hermes;
+
+	@Resource(mappedName = "dg_hermes")
+	protected DataSource dg_hermes;
+
+}

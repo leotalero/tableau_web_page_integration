@@ -1,0 +1,135 @@
+package co.sistemcobro.constelacion.bean;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.sql.Timestamp;
+import java.text.DecimalFormat;
+import java.util.List;
+
+import co.sistemcobro.hermes.bean.UsuarioBean;
+
+public class ClienteFiltro {
+
+	private Long idclientefiltro;
+	private String  codusuario;
+	private Long idproyecto;
+	private Long idfiltro;
+	private String valor;
+	
+	private Integer idusuariocrea;
+	private Timestamp fechacrea;
+	private Integer idusuariomod;
+	private Timestamp fechamod;
+	private Integer estado;
+	
+	private Proyecto proyecto;
+	private Filtro filtro;
+	
+	
+	
+	
+	
+	public Proyecto getProyecto() {
+		return proyecto;
+	}
+	public void setProyecto(Proyecto proyecto) {
+		this.proyecto = proyecto;
+	}
+	public Filtro getFiltro() {
+		return filtro;
+	}
+	public void setFiltro(Filtro filtro) {
+		this.filtro = filtro;
+	}
+	public Long getIdfiltro() {
+		return idfiltro;
+	}
+	public void setIdfiltro(Long idfiltro) {
+		this.idfiltro = idfiltro;
+	}
+	
+	
+	
+	
+	
+	public Long getIdclientefiltro() {
+		return idclientefiltro;
+	}
+	public void setIdclientefiltro(Long idclientefiltro) {
+		this.idclientefiltro = idclientefiltro;
+	}
+
+	
+	
+	
+	
+	
+	public String getCodusuario() {
+		return codusuario;
+	}
+	public void setCodusuario(String codusuario) {
+		this.codusuario = codusuario;
+	}
+	public Long getIdproyecto() {
+		return idproyecto;
+	}
+	public void setIdproyecto(Long idproyecto) {
+		this.idproyecto = idproyecto;
+	}
+	public String getValor() {
+		return valor;
+	}
+	public void setValor(String valor) {
+		this.valor = valor;
+	}
+	public Integer getIdusuariocrea() {
+		return idusuariocrea;
+	}
+	public void setIdusuariocrea(Integer idusuariocrea) {
+		this.idusuariocrea = idusuariocrea;
+	}
+	public Timestamp getFechacrea() {
+		return fechacrea;
+	}
+	public void setFechacrea(Timestamp fechacrea) {
+		this.fechacrea = fechacrea;
+	}
+	public Integer getIdusuariomod() {
+		return idusuariomod;
+	}
+	public void setIdusuariomod(Integer idusuariomod) {
+		this.idusuariomod = idusuariomod;
+	}
+	public Timestamp getFechamod() {
+		return fechamod;
+	}
+	public void setFechamod(Timestamp fechamod) {
+		this.fechamod = fechamod;
+	}
+	public Integer getEstado() {
+		return estado;
+	}
+	public void setEstado(Integer estado) {
+		this.estado = estado;
+	}
+	
+	
+	
+	/*
+	public String getTotalsemaforo1(){
+		String semaforo = "";
+		BigDecimal porcentaje = getTotalporcentaje();
+		if(null != porcentaje && null != indicador){
+			if(porcentaje.compareTo(indicador.getPorcentajeverdeminimo())>=0){
+				semaforo = "verde.gif";
+			}else if(porcentaje.compareTo(indicador.getPorcentajeamarillo())<0){
+				semaforo = "rojo.gif";
+			}else{
+				semaforo = "ambar.gif";
+			}
+		}
+		return semaforo;
+		
+	}*/
+
+}

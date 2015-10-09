@@ -1,0 +1,126 @@
+package co.sistemcobro.constelacion.bean;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.util.List;
+
+import co.sistemcobro.hermes.bean.UsuarioBean;
+
+public class Calculado {
+
+	private UsuarioBean usuario;
+
+	private DimensionArea area;
+	private DimensionIndicador indicador;
+
+	private List<CalculadoValor> valores;
+
+	public UsuarioBean getUsuario() {
+		return usuario;
+	}
+
+	public void setUsuario(UsuarioBean usuario) {
+		this.usuario = usuario;
+	}
+
+	public List<CalculadoValor> getValores() {
+		for(CalculadoValor calculadovalor: valores){
+			calculadovalor.setIndicador(indicador);
+		}
+		return valores;
+	}
+
+	public void setValores(List<CalculadoValor> valores) {
+		this.valores = valores;
+	}
+
+	public DimensionArea getArea() {
+		return area;
+	}
+
+	public void setArea(DimensionArea area) {
+		this.area = area;
+	}
+
+	public DimensionIndicador getIndicador() {
+		return indicador;
+	}
+
+	public void setIndicador(DimensionIndicador indicador) {
+		this.indicador = indicador;
+	}
+
+	public BigDecimal getTotalvaloresIndicador() {
+		BigDecimal total = new BigDecimal(0);
+		for (CalculadoValor val : valores) {
+			if (null != val) {
+				total = total.add(val.getValorindicador());
+			}
+		}
+		return total;
+	}
+
+	public BigDecimal getTotalvaloresMeta() {
+		BigDecimal total = new BigDecimal(0);
+		for (CalculadoValor val : valores) {
+			if (null != val) {
+				total = total.add(val.getValormeta());
+			}
+		}
+		return total;
+	}
+
+	public BigDecimal getTotalporcentaje() {
+		BigDecimal porcentaje = null;
+		if (getTotalvaloresMeta() != null && getTotalvaloresMeta().compareTo(new BigDecimal(0))!=0) {
+			porcentaje = (getFormato(indicador.getFormatovalorindicador(), getTotalvaloresIndicador()).divide(getFormato(indicador.getFormatovalormeta(), getTotalvaloresMeta()), 9, RoundingMode.HALF_UP)).multiply(new BigDecimal(100));
+			porcentaje = getFormato(indicador.getFormatovalorporcentaje(), porcentaje);
+		}
+		return porcentaje;
+	}
+
+	
+	public String getTotalsemaforo(){
+		String semaforo = "";
+		BigDecimal porcentaje = getTotalporcentaje();
+		if(null != porcentaje && null != indicador){
+			if(porcentaje.compareTo(indicador.getPorcentajeverdeminimo()) >= 0 && porcentaje.compareTo(indicador.getPorcentajeverde()) <= 0){
+				semaforo = "verde.gif";
+			}else if(porcentaje.compareTo(indicador.getPorcentajeamarillominimo())>=0 && porcentaje.compareTo(indicador.getPorcentajeamarillo()) < 0){
+				semaforo = "ambar.gif";
+			}else if(porcentaje.compareTo(indicador.getPorcentajerojominimo())>=0 && porcentaje.compareTo(indicador.getPorcentajerojo()) < 0){
+				semaforo = "rojo.gif";
+			}
+		}
+		return semaforo;
+	}
+	
+	public BigDecimal getFormato(String formato,BigDecimal numero){
+		
+		BigDecimal numeroFomateado;
+		DecimalFormat formatoNumero = new DecimalFormat(formato);
+		numeroFomateado = new BigDecimal(formatoNumero.format(numero).toString().replaceAll(",", "."));
+		
+		return numeroFomateado;
+		
+	}
+	
+	/*
+	public String getTotalsemaforo1(){
+		String semaforo = "";
+		BigDecimal porcentaje = getTotalporcentaje();
+		if(null != porcentaje && null != indicador){
+			if(porcentaje.compareTo(indicador.getPorcentajeverdeminimo())>=0){
+				semaforo = "verde.gif";
+			}else if(porcentaje.compareTo(indicador.getPorcentajeamarillo())<0){
+				semaforo = "rojo.gif";
+			}else{
+				semaforo = "ambar.gif";
+			}
+		}
+		return semaforo;
+		
+	}*/
+
+}

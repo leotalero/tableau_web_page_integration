@@ -1,0 +1,102 @@
+package co.sistemcobro.constelacion.dao;
+
+import java.math.BigInteger;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.constante.EstadoEnum;
+import co.sistemcobro.constelacion.bean.CargueTipo;
+import co.sistemcobro.constelacion.bean.DimensionArea;
+import co.sistemcobro.constelacion.bean.DimensionTiempo;
+import co.sistemcobro.constelacion.bean.DimensionTiempoTipo;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class DimensionTiempoDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(DimensionTiempoDAO.class);
+
+	public DimensionTiempoDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	private static String SQL_DIMENSION_TIEMPO = "	select dt.iddimensiontiempo\r\n" + 
+			"		from constelacion.dimension_tiempo  dt\r\n" + 
+			"		where dt.iddimensiontiempotipo = ? and convert(datetime,dt.fecha,112) = convert(datetime,?,112) and  dt.estado=? ";
+	
+	public List<DimensionTiempo> getDimensionTiempoPorFechaTipo(Integer tiempotipo,String fecha) {
+
+		List<DimensionTiempo> tiempos = new ArrayList<DimensionTiempo>();
+		DimensionTiempo tiempo = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_DIMENSION_TIEMPO.toString());
+			ps.setInt(1, tiempotipo);
+			ps.setString(2, fecha);
+			ps.setInt(3, EstadoEnum.ACTIVO.getIndex());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				tiempo = new DimensionTiempo();
+				
+				BigInteger iddimensiontiempo = new BigInteger(Integer.toString(rs.getInt(1)));
+				tiempo.setIddimensiontiempo(iddimensiontiempo);
+				tiempos.add(tiempo);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return tiempos;
+
+	}
+	
+	private static String SQL_VERIFICA_DIMENSION_TIEMPO = " select ci.fecha from constelacion.cargue_indicador ci \r\n" + 
+			"left join constelacion.dimension_tiempo dt on ci.fecha = dt.fecha\r\n" + 
+			"where dt.fecha is null or (ci.iddimensiontiempotipo not in (?) and ci.idcargue = ? )\r\n" + 
+			"group by ci.fecha";
+	
+	public List<DimensionTiempo> getVerificarTiempo(Integer idtiempotipo,Integer idcargue) {
+
+		List<DimensionTiempo> tiempos = new ArrayList<DimensionTiempo>();
+		DimensionTiempo tiempo = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_VERIFICA_DIMENSION_TIEMPO.toString());
+			ps.setInt(1, idtiempotipo);
+			ps.setInt(2, idcargue);
+			rs = ps.executeQuery();
+
+			logger.info(SQL_VERIFICA_DIMENSION_TIEMPO.toString());
+			
+			while (rs.next()) {
+
+				tiempo = new DimensionTiempo();
+				tiempo.setFecha(rs.getTimestamp(1));
+				tiempos.add(tiempo);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return tiempos;
+
+	}
+}

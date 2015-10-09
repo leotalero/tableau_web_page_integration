@@ -1,0 +1,151 @@
+package co.sistemcobro.altitude.bean;
+
+import co.sistemcobro.apps.bean.TerminationStatus;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class CallThread {
+
+	private Integer code;
+	private Integer global_call;
+	private Short termination_status;
+	private String recording_key;
+	private Short el_thread_id;
+	private String trunk_line;
+	private Integer recorder_type;
+	private Short recording_status;
+	private Short rec_failure_reason;
+	private Integer skill_profile;
+	private Integer play_on_ret_dur;
+	private String play_on_ret_file;
+
+	private Thread thread;
+
+	private GlobalCall globalcall;
+
+	private TerminationStatus terminationStatus;
+
+	public Integer getCode() {
+		return code;
+	}
+
+	public void setCode(Integer code) {
+		this.code = code;
+	}
+
+	public Integer getGlobal_call() {
+		return global_call;
+	}
+
+	public void setGlobal_call(Integer global_call) {
+		this.global_call = global_call;
+	}
+
+	public Short getTermination_status() {
+		return termination_status;
+	}
+
+	public void setTermination_status(Short termination_status) {
+		this.termination_status = termination_status;
+	}
+
+	public String getRecording_key() {
+		return recording_key;
+	}
+
+	public void setRecording_key(String recording_key) {
+		this.recording_key = recording_key;
+	}
+
+	public Short getEl_thread_id() {
+		return el_thread_id;
+	}
+
+	public void setEl_thread_id(Short el_thread_id) {
+		this.el_thread_id = el_thread_id;
+	}
+
+	public String getTrunk_line() {
+		return trunk_line;
+	}
+
+	public void setTrunk_line(String trunk_line) {
+		this.trunk_line = trunk_line;
+	}
+
+	public Integer getRecorder_type() {
+		return recorder_type;
+	}
+
+	public void setRecorder_type(Integer recorder_type) {
+		this.recorder_type = recorder_type;
+	}
+
+	public Short getRecording_status() {
+		return recording_status;
+	}
+
+	public void setRecording_status(Short recording_status) {
+		this.recording_status = recording_status;
+	}
+
+	public Short getRec_failure_reason() {
+		return rec_failure_reason;
+	}
+
+	public void setRec_failure_reason(Short rec_failure_reason) {
+		this.rec_failure_reason = rec_failure_reason;
+	}
+
+	public Integer getSkill_profile() {
+		return skill_profile;
+	}
+
+	public void setSkill_profile(Integer skill_profile) {
+		this.skill_profile = skill_profile;
+	}
+
+	public Integer getPlay_on_ret_dur() {
+		return play_on_ret_dur;
+	}
+
+	public void setPlay_on_ret_dur(Integer play_on_ret_dur) {
+		this.play_on_ret_dur = play_on_ret_dur;
+	}
+
+	public String getPlay_on_ret_file() {
+		return play_on_ret_file;
+	}
+
+	public void setPlay_on_ret_file(String play_on_ret_file) {
+		this.play_on_ret_file = play_on_ret_file;
+	}
+
+	public Thread getThread() {
+		return thread;
+	}
+
+	public void setThread(Thread thread) {
+		this.thread = thread;
+	}
+
+	public GlobalCall getGlobalcall() {
+		return globalcall;
+	}
+
+	public void setGlobalcall(GlobalCall globalcall) {
+		this.globalcall = globalcall;
+	}
+
+	public TerminationStatus getTerminationStatus() {
+		return terminationStatus;
+	}
+
+	public void setTerminationStatus(TerminationStatus terminationStatus) {
+		this.terminationStatus = terminationStatus;
+	}
+
+}

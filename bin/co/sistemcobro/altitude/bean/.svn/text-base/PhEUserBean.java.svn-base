@@ -1,0 +1,78 @@
+package co.sistemcobro.altitude.bean;
+
+import java.util.List;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class PhEUserBean {
+
+	private Integer code;
+	private String usr_name;
+	private Short type;
+	private Short active;
+	private Short default_permission;
+
+	private HumanBean human;
+
+	private List<DataTransaction> datatTransactions;
+
+	public Integer getCode() {
+		return code;
+	}
+
+	public void setCode(Integer code) {
+		this.code = code;
+	}
+
+	public String getUsr_name() {
+		return usr_name;
+	}
+
+	public void setUsr_name(String usr_name) {
+		this.usr_name = usr_name;
+	}
+
+	public Short getType() {
+		return type;
+	}
+
+	public void setType(Short type) {
+		this.type = type;
+	}
+
+	public Short getActive() {
+		return active;
+	}
+
+	public void setActive(Short active) {
+		this.active = active;
+	}
+
+	public Short getDefault_permission() {
+		return default_permission;
+	}
+
+	public void setDefault_permission(Short default_permission) {
+		this.default_permission = default_permission;
+	}
+
+	public HumanBean getHuman() {
+		return human;
+	}
+
+	public void setHuman(HumanBean human) {
+		this.human = human;
+	}
+
+	public List<DataTransaction> getDatatTransactions() {
+		return datatTransactions;
+	}
+
+	public void setDatatTransactions(List<DataTransaction> datatTransactions) {
+		this.datatTransactions = datatTransactions;
+	}
+
+}

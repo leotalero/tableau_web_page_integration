@@ -1,0 +1,98 @@
+package co.sistemcobro.altitude.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.altitude.bean.CtBean;
+import co.sistemcobro.altitude.bean.CtTelmexVentasBean;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class CtTelmexVentasDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(CtTelmexVentasDAO.class);
+
+	public CtTelmexVentasDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public Integer insertCtTelmexVentas(String campanaNombre,
+			List<CtTelmexVentasBean> cts) throws DatoException {
+		logger.info("insertCt: campanaNombre:" + campanaNombre + ", cts:"
+				+ cts.size());
+		Integer estatus = 0;
+		int c = 1;
+		try {
+			con = ds.getConnection();
+			String SQL_CT_TELMEX_VENTAS_INSERT = "insert into dbo."
+					+ campanaNombre + " "
+					+ "(easycode,ct_cuenta,ct_ciudad,ct_idcliente,ct_idbase) "
+					+ "values (?, ?, ?, ?, ?)";
+
+			ps = con.prepareStatement(SQL_CT_TELMEX_VENTAS_INSERT.toString());
+			for (CtTelmexVentasBean ct : cts) {
+				c = 1;
+				ps.setInt(c++, ct.getEasycode());
+				ps.setBigDecimal(c++, ct.getCt_cuenta());
+				ps.setString(c++, ct.getCt_ciudad());
+				ps.setBigDecimal(c++, ct.getCt_idcliente());
+				ps.setBigDecimal(c++, ct.getCt_idbase());
+				estatus = estatus + ps.executeUpdate();
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return estatus;
+
+	}
+
+	public List<CtBean> buscarEasyCodesPorIdclientes(String campanaNombre,
+			String idclientes) throws DatoException {
+
+		List<CtBean> clientes = new ArrayList<CtBean>();
+		CtBean cliente = null;
+
+		try {
+
+			String query = "select ct.easycode from altitude.dbo."
+					+ campanaNombre + " ct " + "where ct.ct_idcliente in ("
+					+ idclientes + ") ";
+
+			con = ds.getConnection();
+
+			ps = con.prepareStatement(query.toString());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				cliente = new CtBean();
+				cliente.setEasycode(rs.getInt(1));
+				clientes.add(cliente);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return clientes;
+
+	}
+}

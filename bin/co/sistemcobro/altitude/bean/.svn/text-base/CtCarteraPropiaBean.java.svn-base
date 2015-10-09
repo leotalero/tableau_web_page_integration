@@ -1,0 +1,29 @@
+package co.sistemcobro.altitude.bean;
+
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class CtCarteraPropiaBean extends CtBean {
+
+	private String cedula;
+	private PhContactBean contacto;
+	public String getCedula() {
+		return cedula;
+	}
+	public void setCedula(String cedula) {
+		this.cedula = cedula;
+	}
+	public PhContactBean getContacto() {
+		return contacto;
+	}
+	public void setContacto(PhContactBean contacto) {
+		this.contacto = contacto;
+	}
+
+	
+
+
+}

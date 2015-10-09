@@ -1,0 +1,32 @@
+package co.sistemcobro.altitude.bean;
+
+import java.math.BigDecimal;
+
+/**
+ * 
+ * @author Fabio Alexander Orjuela Diaz
+ * 
+ */
+public class CtEtbBean extends CtBean {
+
+	private BigDecimal ctcedula;
+	private PhContactBean contacto;
+
+	public BigDecimal getCtcedula() {
+		return ctcedula;
+	}
+
+	public void setCtcedula(BigDecimal ctcedula) {
+		this.ctcedula = ctcedula;
+	}
+
+
+	public PhContactBean getContacto() {
+		return contacto;
+	}
+
+	public void setContacto(PhContactBean contacto) {
+		this.contacto = contacto;
+	}
+
+}

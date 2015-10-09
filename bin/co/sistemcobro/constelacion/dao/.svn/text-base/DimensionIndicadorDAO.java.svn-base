@@ -1,0 +1,208 @@
+package co.sistemcobro.constelacion.dao;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.constante.EstadoEnum;
+import co.sistemcobro.constelacion.bean.CargueTipo;
+import co.sistemcobro.constelacion.bean.DimensionArea;
+import co.sistemcobro.constelacion.bean.DimensionIndicador;
+import co.sistemcobro.constelacion.bean.DimensionTiempoTipo;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class DimensionIndicadorDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(DimensionIndicadorDAO.class);
+
+	public DimensionIndicadorDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	private static String SQL_DIMENSION_INDICADOR = "select di.iddimensionindicador, di.nombreindicador, di.porcentajerojomaximo "
+			+ ", di.porcentajeamarillomaximo, di.porcentajeverdemaximo, di.unidadnombre, di.unidadsimbolo, di.estado "
+			+ "from constelacion.dimension_indicador di where estado=? ";
+	
+	public List<DimensionIndicador> getDimensionIndicador() {
+
+		List<DimensionIndicador> indicadores = new ArrayList<DimensionIndicador>();
+		DimensionIndicador indicador = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_DIMENSION_INDICADOR.toString());
+			ps.setInt(1, EstadoEnum.ACTIVO.getIndex());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				indicador = new DimensionIndicador();
+				
+				BigInteger iddimensionindicador = new BigInteger(Integer.toString(rs.getInt(1)));				
+				indicador.setIddimensionindicador(iddimensionindicador);
+				
+				indicador.setNombreindicador(rs.getString(2));
+				
+				BigDecimal porcentajerojo = new BigDecimal(Double.toString(rs.getDouble(3)));
+				indicador.setPorcentajerojo(porcentajerojo);
+				
+				BigDecimal porcentajeamarillo = new BigDecimal(Double.toString(rs.getDouble(4)));
+				indicador.setPorcentajeamarillo(porcentajeamarillo);
+				
+				BigDecimal porcentajeverde = new BigDecimal(Double.toString(rs.getDouble(5)));
+				indicador.setPorcentajeverde(porcentajeverde);
+				
+				indicador.setUnidadnombre(rs.getString(6));
+				logger.info("Nombre unidad indicador "+indicador.getUnidadnombre()+"----------------------------------------------");
+				indicador.setUnidadsimbolo(rs.getString(7));
+
+				indicador.setEstado(rs.getShort(8));
+				indicadores.add(indicador);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return indicadores;
+
+	}
+	
+	private static String SQL_DIMENSION_INDICADOR_POR_ID = "select di.iddimensionindicador ,di.nombreindicador ,di.porcentajerojomaximo ,di.porcentajeamarillomaximo ,di.porcentajeverdemaximo  "
+			+ ",di.formatovalorindicador ,di.formatovalormeta ,di.formatovalorporcentaje ,di.unidadnombre "
+			+ ",,di.unidadsimbolo ,di.idusuariocrea ,di.fechacrea ,di.estado "
+			+ "from constelacion.dimension_indicador di where iddimensionindicador = ? ";
+	
+	public DimensionIndicador getDimensionIndicadorPorId(Integer idindicador) {
+
+		DimensionIndicador indicador = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_DIMENSION_INDICADOR_POR_ID.toString());
+			ps.setInt(1, idindicador);
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				indicador = new DimensionIndicador();
+				
+				BigInteger iddimensionindicador = new BigInteger(Integer.toString(rs.getInt(1)));				
+				indicador.setIddimensionindicador(iddimensionindicador);
+				
+				indicador.setNombreindicador(rs.getString(2));
+				
+				BigDecimal porcentajerojo = new BigDecimal(Double.toString(rs.getDouble(3)));
+				indicador.setPorcentajerojo(porcentajerojo);
+				
+				BigDecimal porcentajeamarillo = new BigDecimal(Double.toString(rs.getDouble(4)));
+				indicador.setPorcentajeamarillo(porcentajeamarillo);
+				
+				BigDecimal porcentajeverde = new BigDecimal(Double.toString(rs.getDouble(5)));
+				indicador.setPorcentajeverde(porcentajeverde);
+				
+				indicador.setFormatovalorindicador(rs.getString(6));
+				indicador.setFormatovalormeta(rs.getString(7));
+				indicador.setFormatovalorporcentaje(rs.getString(8));
+				
+				indicador.setUnidadnombre(rs.getString(9));
+				
+				indicador.setUnidadsimbolo(rs.getString(10));
+				
+				indicador.setIdusuariocrea(rs.getInt(11));
+				indicador.setFechacrea(rs.getTimestamp(12));				
+				indicador.setEstado(rs.getShort(13));
+
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return indicador;
+
+	}
+	
+	private static String SQL_VERIFICA_DIMENSION_INDICADOR = "select ci.iddimensionindicador from constelacion.cargue_indicador ci \r\n" + 
+			"left join constelacion.dimension_indicador di on ci.iddimensionindicador = di.iddimensionindicador \r\n" + 
+			"where di.iddimensionindicador is null and ci.idcargue = ? \r\n" + 
+			"group by ci.iddimensionindicador ";
+	
+	public List<DimensionIndicador> getVerificarIndicador(Integer idcargue) {
+
+		List<DimensionIndicador> idicadores = new ArrayList<DimensionIndicador>();
+		DimensionIndicador idicador = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_VERIFICA_DIMENSION_INDICADOR.toString());
+			ps.setInt(1, idcargue);
+			
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				idicador = new DimensionIndicador();
+				BigInteger iddimensionindicador = new BigInteger(Integer.toString(rs.getInt(1)));
+				idicador.setIddimensionindicador(iddimensionindicador);
+				idicadores.add(idicador);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return idicadores;
+
+	}
+	
+	private static String SQL_DIMENSION_INDICADORES_CARGUE = "SELECT ci.iddimensionindicador\r\n" + 
+			"FROM constelacion.cargue_indicador ci\r\n" + 
+			"where idcargue = ? \r\n" + 
+			"group by ci.iddimensionindicador ";
+	
+	public List<DimensionIndicador> getIndicadorPorCargue(Integer idcargue) {
+
+		List<DimensionIndicador> idicadores = new ArrayList<DimensionIndicador>();
+		DimensionIndicador idicador = null;
+
+		try {
+			con = ds.getConnection();
+			ps = con.prepareStatement(SQL_DIMENSION_INDICADORES_CARGUE.toString());
+			ps.setInt(1, idcargue);
+			
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				idicador = new DimensionIndicador();
+				BigInteger iddimensionindicador = new BigInteger(Integer.toString(rs.getInt(1)));
+				idicador.setIddimensionindicador(iddimensionindicador);
+				idicadores.add(idicador);
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.toString(), e.fillInStackTrace());
+		} finally {
+			closeConexion();
+		}
+		return idicadores;
+
+	}
+
+}

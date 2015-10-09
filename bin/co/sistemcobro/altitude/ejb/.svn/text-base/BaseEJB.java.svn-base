@@ -1,0 +1,20 @@
+package co.sistemcobro.altitude.ejb;
+
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+
+public class BaseEJB {
+
+	@Resource(mappedName = "dc_altitude")
+	protected DataSource dc_altitude;
+
+	@Resource(mappedName = "dg_altitude")
+	protected DataSource dg_altitude;
+
+}

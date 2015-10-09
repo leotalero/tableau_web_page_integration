@@ -1,0 +1,21 @@
+package co.sistemcobro.apps.bean;
+
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class CtBean {
+
+	private Integer easycode;
+
+	public Integer getEasycode() {
+		return easycode;
+	}
+
+	public void setEasycode(Integer easycode) {
+		this.easycode = easycode;
+	}
+
+}

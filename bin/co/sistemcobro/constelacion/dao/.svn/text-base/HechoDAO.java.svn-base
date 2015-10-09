@@ -1,0 +1,156 @@
+package co.sistemcobro.constelacion.dao;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.all.util.Excel;
+import co.sistemcobro.all.util.Util;
+import co.sistemcobro.constelacion.bean.Hecho;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class HechoDAO extends BaseDAO {
+	private Logger logger = Logger.getLogger(HechoDAO.class);
+
+	public HechoDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public Integer insertarHechos(List<Hecho> hechos) throws DatoException {
+		Integer estatus = 0;
+		int c = 1;
+
+		Util.registerConverters();
+		try {
+			con = ds.getConnection();
+
+			StringBuffer q = new StringBuffer();
+			q.append("insert constelacion.cargue_indicador (idcargue,iddimensionindicador,numeroidentificacion,valorindicador,valormeta,iddimensionarea,iddimensiontiempotipo,fecha" +
+					" ,idusuariocrea,fechacrea,estado)");	
+				q.append("values (?,?,?,?,?,?,?,?,?,GETDATE(),?) ");//11
+			
+			ps = con.prepareStatement(q.toString(), Statement.RETURN_GENERATED_KEYS);
+			for (Hecho hecho : hechos) {
+				c = 1;
+				
+				ps.setInt (c++, hecho.getIdcargue());
+				
+				BigDecimal Iddimensionindicador = new BigDecimal(hecho.getIddimensionindicador());
+				ps.setBigDecimal (c++, Iddimensionindicador);
+				
+				BigDecimal Numeroidentificacion = new BigDecimal(hecho.getNumeroidentificacion());
+				ps.setBigDecimal (c++, Numeroidentificacion);
+				
+				ps.setBigDecimal (c++, hecho.getValorindicador());
+				ps.setBigDecimal (c++, hecho.getValormeta());
+				ps.setInt (c++, hecho.getIddimensionarea());
+				ps.setInt (c++, hecho.getIddimensiontiempotipo());
+				ps.setTimestamp (c++, hecho.getFecha());
+				ps.setInt (c++, hecho.getIdusuariocrea());
+				ps.setInt (c++, 2);
+				estatus = estatus + ps.executeUpdate();
+
+				rs = ps.getGeneratedKeys();
+				if (rs.next()) {
+					hecho.setIdhecho(rs.getLong(1));
+				} else {
+					throw new SQLException("Hecho, no se pudo generar su IDHECHO.");
+				}
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return estatus;
+
+	}
+	
+	public void  eliminarHechos() throws DatoException {
+
+		try {
+			con = ds.getConnection();
+
+			StringBuffer q = new StringBuffer();
+			q.append("delete from constelacion.cargue_indicador");
+			ps = con.prepareStatement(q.toString(), Statement.RETURN_GENERATED_KEYS);
+			
+			ps.executeUpdate();
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+
+	}
+	
+	public Integer insertarHechoOperacion(List<Hecho> hechos) throws DatoException {
+		Integer estatus = 0;
+		int c = 1;
+		try {
+			con = ds.getConnection();
+
+			StringBuffer q = new StringBuffer();
+			q.append("insert constelacion.cargue_indicador (idcargue,iddimensionindicador,numeroidentificacion,valorindicador,valormeta,iddimensionarea,iddimensiontiempotipo,fecha" +
+					" ,idusuariocrea,fechacrea,estado)");	
+				q.append("values (?,?,?,?,?,?,?,?,?,GETDATE(),?) ");//11
+			
+
+			for (Hecho hecho : hechos) {
+				c = 1;
+				
+				ps.setInt (c++, hecho.getIdcargue());
+				
+				BigDecimal Iddimensionindicador = new BigDecimal(hecho.getIddimensionindicador());
+				ps.setBigDecimal (c++, Iddimensionindicador);
+				
+				BigDecimal Numeroidentificacion = new BigDecimal(hecho.getNumeroidentificacion());
+				ps.setBigDecimal (c++, Numeroidentificacion);
+				
+				ps.setBigDecimal (c++, hecho.getValorindicador());
+				ps.setBigDecimal (c++, hecho.getValormeta());
+				ps.setInt (c++, hecho.getIddimensionarea());
+				ps.setInt (c++, hecho.getIddimensiontiempotipo());
+				ps.setTimestamp (c++, hecho.getFecha());
+				ps.setInt (c++, hecho.getIdusuariocrea());
+				ps.setInt (c++, 2);
+
+				ps.execute();
+
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return estatus;
+
+	}
+	
+}

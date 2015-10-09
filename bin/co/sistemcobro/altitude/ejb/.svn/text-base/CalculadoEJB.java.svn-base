@@ -1,0 +1,79 @@
+package co.sistemcobro.altitude.ejb;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
+import javax.ejb.Stateless;
+
+import org.apache.log4j.Logger;
+
+import co.sistemcobro.all.constante.DatePartEnum;
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.all.exception.LogicaException;
+import co.sistemcobro.all.util.Util;
+import co.sistemcobro.altitude.bean.Calculado;
+import co.sistemcobro.altitude.bean.Logueo;
+import co.sistemcobro.altitude.dao.CalculadoDAO;
+import co.sistemcobro.altitude.dao.CalculadoDAO.FrecuenciaEnum;
+import co.sistemcobro.apps.bean.Datepart;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+@Stateless
+public class CalculadoEJB extends BaseEJB {
+	private Logger logger = Logger.getLogger(CalculadoEJB.class);
+
+	public CalculadoEJB() {
+	}
+	
+	public List<Calculado> getLlamadasPorCampana(Calendar desde,
+			Calendar hasta, Integer idcampana, FrecuenciaEnum periodo) throws LogicaException  {
+		CalculadoDAO calculadoDAO = new CalculadoDAO(dc_altitude);
+		try {
+			return calculadoDAO.getLlamadasPorCampana(desde, hasta, idcampana, periodo);
+		} catch (DatoException e) {
+			throw new LogicaException(e.toString(), e.getCause());
+		}
+	}
+
+	public List<Logueo> getLogueoIndicadores(Integer idcampana, Calendar desde,
+			Calendar hasta) {
+		
+		List<Logueo> logueos = new ArrayList<Logueo>();
+		CalculadoDAO logueoDAO = new CalculadoDAO(dc_altitude);
+
+		Calendar inicio = Util.addDays(desde, -1);
+		logger.info("inicio:" + inicio.getTime());
+		while (inicio.before(hasta)) {
+			inicio = Util.addDays(inicio, 1);
+			logueos.addAll(logueoDAO.getLogueoIndicadores(idcampana, inicio));
+		}
+		return logueos;
+	}
+
+	public List<Logueo> getLogueo(String idcampanas, Calendar desde,
+			Calendar hasta) {
+		
+		List<Logueo> logueos = new ArrayList<Logueo>();
+		CalculadoDAO logueoDAO = new CalculadoDAO(dc_altitude);
+
+		Calendar inicio = Util.addDays(desde, -1);
+		logger.info("inicio:" + inicio.getTime());
+		while (inicio.before(hasta)) {
+			inicio = Util.addDays(inicio, 1);
+			logueos.addAll(logueoDAO.getLogueo(idcampanas, inicio));
+		}
+		return logueos;
+	}
+	
+	public List<Calculado> getLlamadasPatrones(Calendar desde, Calendar hasta,
+			List<Datepart> patrones, Integer idcampana, DatePartEnum datepart) {
+		CalculadoDAO calculadoDAO = new CalculadoDAO(dc_altitude);
+		return calculadoDAO.getLlamadasPatrones(desde, hasta, patrones,
+				idcampana, datepart);
+	}
+}

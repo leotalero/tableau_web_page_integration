@@ -1,0 +1,44 @@
+package co.sistemcobro.apps.bean;
+
+public class Datepart {
+	private String datepart;
+	private Integer valor;
+	private String nombre;
+	private String nombrecorto;
+
+	public Datepart() {
+	}
+
+	public String getDatepart() {
+		return datepart;
+	}
+
+	public void setDatepart(String datepart) {
+		this.datepart = datepart;
+	}
+
+	public Integer getValor() {
+		return valor;
+	}
+
+	public void setValor(Integer valor) {
+		this.valor = valor;
+	}
+
+	public String getNombre() {
+		return nombre;
+	}
+
+	public void setNombre(String nombre) {
+		this.nombre = nombre;
+	}
+
+	public String getNombrecorto() {
+		return nombrecorto;
+	}
+
+	public void setNombrecorto(String nombrecorto) {
+		this.nombrecorto = nombrecorto;
+	}
+
+}

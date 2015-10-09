@@ -1,0 +1,75 @@
+package co.sistemcobro.apps.dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import co.sistemcobro.all.exception.DatoException;
+import co.sistemcobro.altitude.bean.PhCampaignBean;
+import co.sistemcobro.hermes.dao.BaseDAO;
+
+/**
+ * 
+ * @author Jony Hurtado
+ * 
+ */
+public class CampanaUsuarioDAO extends BaseDAO {
+
+	// private Logger logger = Logger.getLogger(TerminationStatusDAO.class);
+
+	public CampanaUsuarioDAO() {
+	}
+
+	public CampanaUsuarioDAO(DataSource ds) {
+		this.ds = ds;
+	}
+
+	public List<PhCampaignBean> getCampanasPorUsuario(Integer idusuario) throws DatoException {
+
+		List<PhCampaignBean> campaigns = new ArrayList<PhCampaignBean>();
+		PhCampaignBean campaign = null;
+
+		try {
+
+			con = ds.getConnection();
+			StringBuffer q = new StringBuffer();
+			q.append("select c.code, c.shortname, c.fullname, c.campaigntype, ");
+			q.append("c.status, c.foreseen_start, c.foreseen_end, c.foreseen_calls, c.start_time, c.end_time ");
+			q.append("from altitude.dbo.ph_campaign c ");
+			q.append("inner join altitude.campana_usuario cu on cu.idcampana=c.code ");
+			q.append("where cu.idusuario=?  order by c.shortname ");
+
+			ps = con.prepareStatement(q.toString());
+			ps.setInt(1, idusuario);
+
+			rs = ps.executeQuery();
+			int c = 1;
+			while (rs.next()) {
+				c = 1;
+				campaign = new PhCampaignBean();
+				campaign.setCode(rs.getInt(c++));
+				campaign.setShortname(rs.getString(c++));
+				campaign.setFullname(rs.getString(c++));
+				campaign.setCampaigntype(rs.getShort(c++));
+				campaign.setStatus(rs.getShort(c++));
+				campaign.setForeseen_start(rs.getTimestamp(c++));
+				campaign.setForeseen_end(rs.getTimestamp(c++));
+				campaign.setForeseen_calls(rs.getInt(c++));
+				campaign.setStart_time(rs.getTimestamp(c++));
+				campaign.setEnd_time(rs.getTimestamp(c++));
+				campaigns.add(campaign);
+			}
+
+		} catch (SQLException e) {
+			throw new DatoException(e.toString());
+		} catch (Exception e) {
+			throw new DatoException(e.toString());
+		} finally {
+			closeConexion();
+		}
+		return campaigns;
+	}
+
+}

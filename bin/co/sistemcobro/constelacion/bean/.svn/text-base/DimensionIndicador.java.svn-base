@@ -1,0 +1,198 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package co.sistemcobro.constelacion.bean;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
+import javax.persistence.Basic;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+
+/**
+ *
+ * @author jhurtado
+ */
+
+public class DimensionIndicador implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private BigInteger iddimensionindicador ;
+    private String nombreindicador ;
+    private BigDecimal porcentajerojominimo ;
+    private BigDecimal porcentajeamarillominimo ;
+    private BigDecimal porcentajeverdeminimo ;
+    private BigDecimal porcentajerojo ;
+    private BigDecimal porcentajeamarillo ;
+    private BigDecimal porcentajeverde ;
+    private String formatovalorindicador ;
+    private String formatovalormeta ;
+    private String formatovalorporcentaje ;
+    private String unidadnombre ;
+    private String unidadsimbolo ;
+    private int idusuariocrea ;
+    private Timestamp fechacrea ;
+    private Short estado ;
+
+	public BigInteger getIddimensionindicador() {
+		return iddimensionindicador;
+	}
+
+	public void setIddimensionindicador(BigInteger iddimensionindicador) {
+		this.iddimensionindicador = iddimensionindicador;
+	}
+
+	public String getNombreindicador() {
+		return nombreindicador;
+	}
+
+	public void setNombreindicador(String nombreindicador) {
+		this.nombreindicador = nombreindicador;
+	}
+	
+	public BigDecimal getPorcentajerojo() {
+		return porcentajerojo;
+	}
+
+	public void setPorcentajerojo(BigDecimal porcentajerojo) {
+		this.porcentajerojo = porcentajerojo;
+	}
+
+	public BigDecimal getPorcentajeamarillo() {
+		return porcentajeamarillo;
+	}
+
+	public void setPorcentajeamarillo(BigDecimal porcentajeamarillo) {
+		this.porcentajeamarillo = porcentajeamarillo;
+	}
+
+	public BigDecimal getPorcentajeverde() {
+		return porcentajeverde;
+	}
+
+	public void setPorcentajeverde(BigDecimal porcentajeverde) {
+		this.porcentajeverde = porcentajeverde;
+	}
+
+	public String getFormatovalorindicador() {
+		return formatovalorindicador;
+	}
+
+	public void setFormatovalorindicador(String formatovalorindicador) {
+		this.formatovalorindicador = formatovalorindicador;
+	}
+
+	public String getFormatovalormeta() {
+		return formatovalormeta;
+	}
+
+	public void setFormatovalormeta(String formatovalormeta) {
+		this.formatovalormeta = formatovalormeta;
+	}
+
+	public String getFormatovalorporcentaje() {
+		return formatovalorporcentaje;
+	}
+
+	public void setFormatovalorporcentaje(String formatovalorporcentaje) {
+		this.formatovalorporcentaje = formatovalorporcentaje;
+	}
+
+	public String getUnidadnombre() {
+		return unidadnombre;
+	}
+
+	public void setUnidadnombre(String unidadnombre) {
+		this.unidadnombre = unidadnombre;
+	}
+
+	public String getUnidadsimbolo() {
+		return unidadsimbolo;
+	}
+
+	public void setUnidadsimbolo(String unidadsimbolo) {
+		this.unidadsimbolo = unidadsimbolo;
+	}
+
+	public int getIdusuariocrea() {
+		return idusuariocrea;
+	}
+
+	public void setIdusuariocrea(int idusuariocrea) {
+		this.idusuariocrea = idusuariocrea;
+	}
+
+	public Timestamp getFechacrea() {
+		return fechacrea;
+	}
+
+	public void setFechacrea(Timestamp fechacrea) {
+		this.fechacrea = fechacrea;
+	}
+
+	public Short getEstado() {
+		return estado;
+	}
+
+	public void setEstado(Short estado) {
+		this.estado = estado;
+	}
+	
+	public BigDecimal getPorcentajerojominimo() {
+		return porcentajerojominimo;
+	}
+
+	public void setPorcentajerojominimo(BigDecimal porcentajerojominimo) {
+		this.porcentajerojominimo = porcentajerojominimo;
+	}
+
+	public BigDecimal getPorcentajeamarillominimo() {
+		return porcentajeamarillominimo;
+	}
+
+	public void setPorcentajeamarillominimo(BigDecimal porcentajeamarillominimo) {
+		this.porcentajeamarillominimo = porcentajeamarillominimo;
+	}
+
+	public BigDecimal getPorcentajeverdeminimo() {
+		return porcentajeverdeminimo;
+	}
+
+	public void setPorcentajeverdeminimo(BigDecimal porcentajeverdeminimo) {
+		this.porcentajeverdeminimo = porcentajeverdeminimo;
+	}
+
+	@Override
+    public boolean equals(Object object) {
+        // TODO: Warning - this method won't work in the case the id fields are not set
+        if (!(object instanceof DimensionIndicador)) {
+            return false;
+        }
+        DimensionIndicador other = (DimensionIndicador) object;
+        if ((this.iddimensionindicador == null && other.iddimensionindicador != null) || (this.iddimensionindicador != null && !this.iddimensionindicador.equals(other.iddimensionindicador))) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "colsubsidio.CargueTipo[ idcarguetipo=" + iddimensionindicador + " ]";
+    }
+    
+}
